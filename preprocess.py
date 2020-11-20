@@ -105,7 +105,7 @@ def ascii_to_id(ascii_chords: list, dictionary: dict) -> list:
 	"""
 	Turn each ASCII character in ascii_chords into its unique id
 	:param ascii_chords: a list of ASCII characters of length length_of_longest_piece
-	:param dictionary: a dictinary mapping ASCII ids to integer ids from generate_ascii_dictionary
+	:param dictionary: a dictionary mapping integer ids to ASCII ids from generate_ascii_dictionary
 	:return: a list of integers of length length_of_longest_piece
 	"""
 	id_chords = []
