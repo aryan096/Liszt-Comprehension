@@ -14,7 +14,7 @@ def midi_to_m21(file_path: str):
 	# ToDo:
 	# open file
 	# converter.parse(file_path)
-	thing = "music 21 object"
+	thing = "music 21 object" # this is a placeholder
 	return thing
 
 
