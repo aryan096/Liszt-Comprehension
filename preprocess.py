@@ -49,11 +49,11 @@ def amend_duration_dictionary(duration_dictionary: dict, durations: list):
 	:param durations: a list of all durations encountered in preprocessing
 	:return: None
 	"""
-	duration_to_id = {}
+	id_to_duration = {}
 	# ToDo:
 	# give each duration an id
 	# make sure the duration ids are not the ids for pad, start, and stop. We could just make them very large numbers
-	# if duration not in duration_dictionary, add key of duration and value of id
+	# if duration not in duration_dictionary.values(), add key of duration and value of id
 	return None
 
 
@@ -72,13 +72,13 @@ def chord_to_ascii(chords: list, dictionary: dict) -> list:
 
 def generate_ascii_dictionary() -> dict:
 	"""
-	Give each ASCII string on a piano a unique integer id
-	:return: dictionary mapping ASCII string to id
+	Give each ASCII string on a unique integer id
+	:return: dictionary mapping id to ASCII string
 	"""
-	ascii_to_id = {}
+	id_to_ascii = {}
 	# ToDo:
 	# give each possible chord, permutation invariant, a unique integer id
-	return ascii_to_id
+	return id_to_ascii
 
 
 def pad_and_token(max_length: int, stripped_piece: list) -> list:
