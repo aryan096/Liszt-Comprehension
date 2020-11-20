@@ -22,7 +22,7 @@ def note_train(model, train_inputs, train_labels):
         label_batch = train_labels[num_trained:num_trained + model.batch_size]
 
         with tf.GradientTape() as tape:
-            probabilities = model(input_batch, None)
+            probabilities, _ = model(input_batch, None)
             loss = model.loss(probabilities, label_batch)
 
         num_trained += model.batch_size
@@ -51,7 +51,7 @@ def note_test(model, test_inputs, test_labels):
         input_batch = test_inputs[num_tested:num_tested + model.batch_size]
         label_batch = test_labels[num_tested:num_tested + model.batch_size]
 
-        probabilities = model(input_batch, None)
+        probabilities, _ = model(input_batch, None)
         loss = model.loss(probabilities, label_batch)
         loss_list.append(loss)
 
@@ -118,4 +118,4 @@ def main():
     pass
 
 if __name__ == '__main__':
-	main()
+    main()

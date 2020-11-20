@@ -16,27 +16,27 @@ class NoteGen(Model):
 
 
         self.note_embedding = tf.keras.layers.Embedding(self.note_vocab_size, self.embedding_size)
-        self.gru1 = tf.keras.layers.GRU(self.piece_length, return_sequences=True)
+        self.gru1 = tf.keras.layers.GRU(self.piece_length, return_sequences=True, return_state=True)
         # TODO - add more GRUs if necessary
         self.dense1 = tf.keras.layers.Dense(int(self.note_vocab_size/2), activation= 'relu')
         self.dense2 = tf.keras.layers.Dense(self.note_vocab_size, activation='softmax')
 
 
-    def call(self, inputs):
+    def call(self, inputs, initial_state=None):
         '''
         use LSTM and Attention along with dense layers after.
         :param inputs: string ids of shape (batch_size, piece_length)
-        :return: probabilities (batch_size, piece_length, vocab_size)
+        :return: probabilities (batch_size, piece_length, note_vocab_size)8jb
         '''
         note_embeddings = self.note_embedding(inputs)
-        gru1_out = self.gru1(note_embeddings)
+        gru1_out, final_state = self.gru1(note_embeddings, initial_state=initial_state)
         # TODO - add more GRUs if necessary
 
         dense1_out = self.dense1(gru1_out)
         dense2_out = self.dense2(dense1_out)
         # TODO - add dropout/leaky relu/more layers if necessary
 
-        return dense2_out
+        return dense2_out, final_state
 
     def loss(self, probs, labels):
         '''
