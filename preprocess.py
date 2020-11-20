@@ -5,6 +5,11 @@
 #               check through each generated ascii and compare to all other asciis for permutations
 
 
+PAD_TOKEN = "**PAD**"
+STOP_TOKEN = "**STOP**"
+START_TOKEN = "**START**"
+
+
 def midi_to_m21(file_path: str):
 	"""
 	Converts midi file into music21 objects
@@ -125,6 +130,7 @@ def duration_to_id(durations: list, duration_dictionary: dict, ascii_dictionary)
 
 def get_data(midi_folder):
 	"""
+	Herbert
 	Does all the preprocessing
 	:param midi_folder: a directory of all midi files
 	:return: notes in pieces as an id array of shape [num_pieces, max_piece_length],
