@@ -59,6 +59,7 @@ def ascii_to_m21(notes, durations=None):
 			chord = note.Chord()
 			split = list(chord)
 			for note in split:
+				pass
 	pass
 
 
