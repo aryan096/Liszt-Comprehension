@@ -1,3 +1,4 @@
+from music21 import *
 # ToDo: (general)
 # import necessary packages
 # figure out where to take care of chord permutations
@@ -12,18 +13,17 @@ START_TOKEN = "**START**"
 
 def midi_to_m21(file_path: str):
 	"""
-	Converts midi file into music21 objects
+	This function takes in a file_path to a midi file and returns the m21 score object
+	for that file
 	:param file_path: global file path for a single midi file
 	:return: a music21 object
 	"""
-	# ToDo:
-	# open file
-	# converter.parse(file_path)
-	thing = "music 21 object" # this is a placeholder
-	return thing
+	file_path_split = file_path.split('/')
+	print('parsing ' + file_path_split[len(file_path_split) - 1] + ' ...')
+	m21_midi = converter.parse(file_path) # This will return a score object
+	return m21_midi
 
-
-def strip_durations(piece) -> (list, list):
+def strip_durations(score) -> (list, list):
 	"""
 	Converts a music21 object to list of chords(notes, chords, rests) and list of durations
 	:param piece: a piece of music as a music21 object
