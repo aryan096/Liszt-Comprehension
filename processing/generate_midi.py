@@ -90,7 +90,8 @@ def ascii_to_m21(ascii_notes: list, ascii_to_m21_dict: dict, durations=None):
 def generate_midi(note_model, id_ascii_dict: dict, id_duration_dict: dict, ascii_m21_dict: dict,
                   initial_note_ascii: str, length: int, duration_model=None) -> None:
 	"""
-	Does the complete postprocessing using above-defined helper functions
+	Does the complete postprocessing using above-defined helper functions and saves a file called "generated_piece.midi"
+	to the current directory
 	:param note_model: model that generates notes
 	:param id_ascii_dict: dictionary mapping ids to ASCII
 	:param id_duration_dict: dictionary mapping ids to durations
