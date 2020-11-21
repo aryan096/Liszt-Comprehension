@@ -109,5 +109,6 @@ def generate_midi(note_model, id_ascii_dict: dict, id_duration_dict: dict, ascii
 		durations = None
 	ascii_notes = id_to_ascii(composed_piece, id_ascii_dict)
 	piece = ascii_to_m21(ascii_notes, ascii_m21_dict, durations)
-	piece.write("midi", "generated_music.midi")
+	piece.write("midi", "generated_piece.midi")
+	piece.show()  # only works if MusicXML reader like MuseScore, Finale, or Sibelius is installed
 
