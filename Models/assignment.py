@@ -6,6 +6,7 @@ from tensorflow.keras import Model
 import time
 #from preprocess ...
 
+
 def note_train(model, train_inputs, train_labels):
     '''
 

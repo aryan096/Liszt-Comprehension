@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras import Model
+from Transformers.Attention import MultiHeadAttention
 # from preprocess ...
 
 class NoteGen(Model):
@@ -18,6 +19,12 @@ class NoteGen(Model):
         self.note_embedding = tf.keras.layers.Embedding(self.note_vocab_size, self.embedding_size)
         self.gru1 = tf.keras.layers.GRU(self.piece_length, return_sequences=True, return_state=True)
         # TODO - add more GRUs if necessary
+
+        self.attention1 = MultiHeadAttention(128, 8)
+        # TODO - add more attention layers if necessary
+
+        self.gru2 = tf.keras.layers.GRU(self.piece_length, return_sequences=True, return_state=True)
+
         self.dense1 = tf.keras.layers.Dense(int(self.note_vocab_size/2), activation= 'relu')
         self.dense2 = tf.keras.layers.Dense(self.note_vocab_size, activation='softmax')
 
@@ -31,6 +38,7 @@ class NoteGen(Model):
         note_embeddings = self.note_embedding(inputs)
         gru1_out, final_state = self.gru1(note_embeddings, initial_state=initial_state)
         # TODO - add more GRUs if necessary
+
 
         dense1_out = self.dense1(gru1_out)
         dense2_out = self.dense2(dense1_out)
