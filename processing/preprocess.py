@@ -1,4 +1,7 @@
 from music21 import *
+from fractions import Fraction
+import os
+import random
 # ToDo: (general)
 # import necessary packages
 # figure out where to take care of chord permutations
@@ -9,7 +12,6 @@ from music21 import *
 PAD_TOKEN = "**PAD**"
 STOP_TOKEN = "**STOP**"
 START_TOKEN = "**START**"
-
 
 def midi_to_m21(file_path: str):
 	"""
@@ -23,29 +25,60 @@ def midi_to_m21(file_path: str):
 	m21_midi = converter.parse(file_path) # This will return a score object
 	return m21_midi
 
-def strip_durations(score) -> (list, list):
+
+def get_notes_and_durations(score) -> (list, list):
 	"""
 	Converts a music21 object to list of chords(notes, chords, rests) and list of durations
 	:param piece: a piece of music as a music21 object
 	:return: a list of chords and a list of durations of length number_of_chords_in_piece
 	"""
-	chords = []
+	sounds = []
 	durations = []
-	# ToDo:
-	# add pitches from each chord/rest in piece to chords
-	# add durations of each chord/rest in piece to durations
-	return chords, durations
+	# This loop goes through everything in the score, adds notes, chords, and
+	# rests to the sounds list, and durations to the durations list
+	for sound in score.flat.elements:
+		# add durations
+		durations.append(sound.duration.quarterLength)
 
+	try: # file has instrument parts
+		sounds = instrument.partitionByInstrument(score).parts[0].recurse()
+	except: # file has notes in a flat structure
+		sounds = score.flat.notesAndRests
 
-def generate_pitch_dictionary() -> dict:
+	return sounds, durations
+
+def amend_pitch_dictionary(pitch_dict: dict, pitch_string_dict: dict, pitches: list) -> (dict, dict):
 	"""
-	Give each pitch on a piano, rest, start token, stop token, and pad token a unique ASCII id
-	:return: dictionary mapping pitch to ASCII character
+	Given the current dictionary and pitches, update it
+	:return: dictionary mapping pitch to a unique integer identifier
 	"""
-	pitch_to_ascii = {}
-	# ToDo:
-	# give each possible pitch, rest, pad token, start token, stop token one of 92 ascii characters
-	return pitch_to_ascii
+
+	# for each element in pitches, make a unique key mapped to it
+	for thing in pitches:
+
+		unique_id = ""
+
+		curr = random.randint(100, 900)
+		while curr in pitch_dict:
+			curr = random.randint(100, 900)
+
+		if isinstance(thing, note.Note):
+			# if thing is a note
+			unique_id = str(thing.pitch)
+
+		elif isinstance(thing, chord.Chord):
+			# if thing is a chord
+			chord_pitches = thing.pitches
+			unique_id = '.'.join(str(pitch) for pitch in chord_pitches)
+
+		elif isinstance(thing, note.Rest):
+			# if thing is a rest
+			unique_id = 'rest'
+
+		pitch_dict[unique_id] = curr
+		pitch_string_dict[str(thing)] = unique_id
+
+	return pitch_dict, pitch_string_dict
 
 
 def amend_duration_dictionary(duration_dictionary: dict, durations: list):
@@ -54,37 +87,20 @@ def amend_duration_dictionary(duration_dictionary: dict, durations: list):
 	:param durations: a list of all durations encountered in preprocessing
 	:return: None
 	"""
-	id_to_duration = {}
-	# ToDo:
-	# give each duration an id
-	# make sure the duration ids are not the ids for pad, start, and stop. We could just make them very large numbers
-	# if duration not in duration_dictionary.values(), add key of duration and value of id
-	return None
 
+	# each duration is keyed with an integer starting from
+	for duration in durations:
+		# generate random key between 1000 and 100000
+		# this range should be more than good enough
+		curr = random.randint(1000, 100000)
+		while curr in duration_dictionary:
+			curr = random.randint(1000, 100000)
 
-def chord_to_ascii(chords: list, dictionary: dict) -> list:
-	"""
-	Turn each chord in chords into a unique ASCII string
-	:param chords: a list of pitches of length number_of_chords_in_piece
-	:param dictionary: a dictionary mapping a pitch to an ASCII character from generate_pitch_dictionary
-	:return: a list of ASCII characters of length number_of_chords_in_piece
-	"""
-	ascii_chords = []
-	# ToDo:
-	# turn each chord into a unique ascii string
-	return ascii_chords
+		if duration not in duration_dictionary.values():
+			# add key of duration and map it to the value
+			duration_dictionary[duration] = curr
 
-
-def generate_ascii_dictionary() -> dict:
-	"""
-	Give each ASCII string on a unique integer id
-	:return: dictionary mapping id to ASCII string
-	"""
-	id_to_ascii = {}
-	# ToDo:
-	# give each possible chord, permutation invariant, a unique integer id
-	return id_to_ascii
-
+	return duration_dictionary
 
 def pad_and_token(max_length: int, stripped_piece: list) -> list:
 	"""
@@ -101,31 +117,36 @@ def pad_and_token(max_length: int, stripped_piece: list) -> list:
 	return padded
 
 
-def ascii_to_id(ascii_chords: list, dictionary: dict) -> list:
+def pitches_to_id(pitches: list, pitch_dictionary: dict, pitch_string_dict: dict) -> list:
 	"""
 	Turn each ASCII character in ascii_chords into its unique id
 	:param ascii_chords: a list of ASCII characters of length length_of_longest_piece
 	:param dictionary: a dictionary mapping integer ids to ASCII ids from generate_ascii_dictionary
 	:return: a list of integers of length length_of_longest_piece
 	"""
-	id_chords = []
-	# ToDo:
-	# turn each ASCII string into its unique ID
-	return id_chords
+	pitches_unique_ids = []
+
+	for pitch in pitches:
+		pitches_unique_ids.append(pitch_dictionary[pitch_string_dict[str(pitch)]])
+
+	return pitches_unique_ids
 
 
-def duration_to_id(durations: list, duration_dictionary: dict, ascii_dictionary) -> list:
+def duration_to_id(durations: list, duration_dictionary: dict) -> list:
 	"""
 	Turn each duration in durations into its unique id
 	:param durations: a list of durations of length length_of_longest_piece
 	:param duration_dictionary: a dictionary mapping durations to integer ids
-	:param ascii_dictionary: a dictionary mapping ascii characters to integer ids
 	:return: a list of integers of length length_of_longest_piece
 	"""
-	id_durations = []
-	# ToDo:
-	# turn each duration and ASCII pad, start, and stop string into its unique ID
-	return id_durations
+
+	durations_unique_ids = []
+
+	for duration in durations:
+		durations_unique_ids.append(duration_dictionary[duration])
+
+	return durations_unique_ids
+
 
 
 def get_data(midi_folder):
@@ -139,24 +160,42 @@ def get_data(midi_folder):
 			dictionary mapping id's to durations,
 			pad_token_id
 	"""
-	# ToDo:
-	# use all functions above
+
 	pad_token_id = 0 # this is a placeholder
 	duration_dictionary = {}
 	pieces = []
 	durations = []
 	max_length = 0
-	pitch_dictionary = generate_pitch_dictionary()
-	ascii_to_id_dict = generate_ascii_dictionary()
+	pitch_dictionary =  {}
+	pitch_string_dict = {}
+	ascii_to_id_dict = {}
+
+	# list of files in midi_folder
+	#midi_files = os.listdir(midi_folder)
+
 	for elm in midi_folder:
-		m21_piece = midi_to_m21(midi_folder)
-		chords, durations = strip_durations(m21_piece)
+
+		m21_score = midi_to_m21(midi_folder) # this returns the m21 score object
+		# this gets the list of notes,chords, rests, and the list of durations
+		score, durations = get_notes_and_durations(m21_score)
+		# check for max length
 		if len(durations) > max_length:
 			max_length = len(durations)
-		amend_duration_dictionary(duration_dictionary, durations)
-		ascii_chords = chord_to_ascii(chords, pitch_dictionary)
-		chord_to_ascii()
-		ascii_to_id()
+
+		# this should get a dict of unique_ids mapped to durations
+		duration_dictionary = amend_duration_dictionary(duration_dictionary, durations)
+		durations_unique_ids = duration_to_id(durations, duration_dictionary)
+
+		# this should get a dict of unique_ids mapped to a pitch
+		pitch_dictionary, pitch_string_dict = amend_pitch_dictionary(pitch_dictionary, pitch_string_dict, score)
+		pitches_unique_ids = pitches_to_id(score, pitch_dictionary, pitch_string_dict)
+
+
 		pad_and_token()
 		# take final padded chords and durations
-	return pieces, durations, ascii_to_id_dict, duration_dictionary, pad_token_id
+	return pieces, durations, pitch_dictionary, duration_dictionary, pad_token_id
+
+# IDs allocation
+# 1000 - 100000: reserved for durations
+# 100 - 900: reserved for pitches
+get_data('/Users/ford/Documents/Classes/DL/Liszt-Comprehension/data/Scarlatti/k001.mid')
