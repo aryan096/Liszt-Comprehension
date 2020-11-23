@@ -33,7 +33,7 @@ class NoteGen(Model):
         '''
         use LSTM and Attention along with dense layers after.
         :param inputs: string ids of shape (batch_size, piece_length)
-        :return: probabilities (batch_size, piece_length, note_vocab_size)8jb
+        :return: probabilities (batch_size, piece_length, note_vocab_size)
         '''
         note_embeddings = self.note_embedding(inputs)
         gru1_out, final_state = self.gru1(note_embeddings, initial_state=initial_state)
