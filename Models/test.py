@@ -13,7 +13,7 @@ def test_generate():
 
     print(generate_notes(model, fake_id_to_ascii_dict, initial_note_ascii, 20))
 
-#test_generate()
+test_generate()
 
 def get_inputs_and_labels(data):
     inputs = [data[i][:-1] for i in range(len(data))]

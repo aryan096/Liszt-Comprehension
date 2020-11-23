@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras import Model
 from keras.layers import Dense, Dropout, GRU, Activation, Bidirectional, Flatten
-from keras_self_attention import SeqSelfAttention
+from keras_multi_head import MultiHeadAttention
 # from preprocess ...
 
 def create_network(note_vocab_size, is_training=False):
@@ -13,7 +13,7 @@ def create_network(note_vocab_size, is_training=False):
     model.add(tf.keras.layers.Embedding(note_vocab_size, embedding_size))
 
     model.add(Bidirectional(GRU(100, return_sequences=True)))
-    model.add(SeqSelfAttention(attention_activation='sigmoid'))
+    model.add(MultiHeadAttention(head_num=4))
     if is_training:
         model.add(Dropout(0.3))
 
