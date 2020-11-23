@@ -1,8 +1,8 @@
-#from music21 import *
+from music21 import *
 import numpy as np
 
 
-def generate_notes_old(model, id_to_ascii_dict: dict, initial_note_ascii: str, length: int) -> list:
+def generate_notes(model, id_to_ascii_dict: dict, initial_note_ascii: str, length: int) -> list:
 	"""
 	Generates a piece of notes given a starting note
 	:param model: trained model
@@ -11,27 +11,6 @@ def generate_notes_old(model, id_to_ascii_dict: dict, initial_note_ascii: str, l
 	:param length: desired piece length
 	:return: a generated piece of ASCII characters
 	"""
-
-	sample_n = 10
-	reverse_dictionary = {ascii: id for ascii, id in id_to_ascii_dict.items()}
-	previous_state = None
-
-	first_note_index = reverse_dictionary[initial_note_ascii]
-	next_input = [[first_note_index]]
-	ascii_piece = [initial_note_ascii]
-
-	for i in range(length):
-		probs, previous_state = model.call(next_input, previous_state)
-		probs = np.array(probs[0, 0, :])
-		top_note_ids = np.argsort(probs)[-sample_n:]
-		top_probs = np.exp(probs[top_note_ids]) / sum(np.exp(probs[top_note_ids]))
-		next_chord_index = np.random.choice(top_note_ids, p=top_probs)
-
-		ascii_piece.append(id_to_ascii_dict[next_chord_index])
-		next_input = [[next_chord_index]]
-	return ascii_piece
-
-def generate_notes(model, id_to_ascii_dict: dict, initial_note_ascii: str, length: int):
 	sample_n = 10
 	reverse_dictionary = {ascii: id for id, ascii in id_to_ascii_dict.items()}
 
