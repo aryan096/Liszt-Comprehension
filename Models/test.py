@@ -9,7 +9,7 @@ def test_generate():
     fake_id_to_ascii_dict = {i:l for i,l in enumerate("ABCDEFGHIJK")}
     initial_note_ascii = "J"
 
-    model = create_network(len(fake_id_to_ascii_dict))
+    model = create_note_gen_network(len(fake_id_to_ascii_dict))
 
     print(generate_notes(model, fake_id_to_ascii_dict, initial_note_ascii, 20))
 
@@ -30,7 +30,8 @@ def test_train():
     fake_input, fake_labels = get_inputs_and_labels(fake_data)
 
     #print(model.call(fake_input))
-    train(model, fake_input, fake_labels)
+    train_note_gen(model, fake_input, fake_labels)
+    print(test_note_gen(model, fake_input, fake_labels))
     print("success!")
 
 
