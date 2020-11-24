@@ -12,9 +12,13 @@ import tensorflow as tf
 
 
 PAD_TOKEN = "**PAD**"
+PAD_ASCII = chr(35)
 STOP_TOKEN = "**STOP**"
+STOP_ASCII = chr(34)
 START_TOKEN = "**START**"
+START_ASCII = chr(33)
 REST_TOKEN = "rest"
+REST_ASCII = chr(36)
 
 def midi_to_m21(file_path: str):
 	"""
@@ -65,53 +69,8 @@ def accumulate_offset(incremental_offset: list) -> list:
 		out.append(out[i]+incremental_offset[i+1])
 	return out
 
-def ammend_ascii_pitch_dict(ascii_dict, pitches):
-	for note in pitches:
-		if note not in ascii_dict:
-			ascii_dict[pitch] = chr(len(ascii_dict) + 33)
 
-def construct_vocab(ascii_corpus: list):
-	ascii_corpus
-
-
-
-def amend_pitch_dictionary(pitch_dict: dict, pitch_string_dict: dict, pitch: float) -> (dict, dict):
-	"""
-	Given the current dictionary and pitches, update it
-	:return: dictionary mapping pitch to a unique integer identifier
-	"""
-
-	# for each element in pitches, make a unique key mapped to it
-
-
-	for thing in pitches:
-
-		unique_id = ""
-
-		curr = random.randint(100, 900)
-		while curr in pitch_dict:
-			curr = random.randint(100, 900)
-
-		if isinstance(thing, note.Note):
-			# if thing is a note
-			unique_id = str(thing.pitch)
-
-		elif isinstance(thing, chord.Chord):
-			# if thing is a chord
-			chord_pitches = thing.pitches
-			unique_id = '.'.join(str(pitch) for pitch in chord_pitches)
-
-		elif isinstance(thing, note.Rest):
-			# if thing is a rest
-			unique_id = 'rest'
-
-		pitch_dict[unique_id] = curr
-		pitch_string_dict[str(thing)] = unique_id
-
-	return pitch_dict, pitch_string_dict
-
-
-def pitchify(score: list):
+def note_pitchify(score: list):
 	pitches = []
 	for thing in score:
 		if isinstance(thing, note.Note):
@@ -170,21 +129,6 @@ def pad_and_token(max_length: int, stripped_piece: list) -> list:
 	return padded
 
 
-def pitches_to_id(pitches: list, pitch_dictionary: dict, pitch_string_dict: dict) -> list:
-	"""
-	Turn each ASCII character in ascii_chords into its unique id
-	:param ascii_chords: a list of ASCII characters of length length_of_longest_piece
-	:param dictionary: a dictionary mapping integer ids to ASCII ids from generate_ascii_dictionary
-	:return: a list of integers of length length_of_longest_piece
-	"""
-	pitches_unique_ids = []
-
-	for pitch in pitches:
-		pitches_unique_ids.append(pitch_dictionary[pitch_string_dict[str(pitch)]])
-
-	return pitches_unique_ids
-
-
 def duration_to_id(durations: list, duration_dictionary: dict) -> list:
 	"""
 	Turn each duration in durations into its unique id
@@ -201,7 +145,7 @@ def duration_to_id(durations: list, duration_dictionary: dict) -> list:
 	return durations_unique_ids
 
 
-def asciify(chords: list, ascii_dict):
+def note_asciify(chords: list, ascii_dict):
 	ascii_piece = []
 	for chord in chords:
 		ascii_chord = []
@@ -215,7 +159,7 @@ def asciify(chords: list, ascii_dict):
 	return ascii_piece
 
 
-def idfy(asciis: list, id_dict):
+def note_idify(asciis: list, id_dict):
 	id_piece = []
 	for ascii in asciis:
 		if ascii not in id_dict:
@@ -225,10 +169,14 @@ def idfy(asciis: list, id_dict):
 
 	return id_piece
 
+def get_inputs_and_labels(data):
+    inputs = [data[i][:-1] for i in range(len(data))]
+    labels = [data[i][1:] for i in range(len(data))]
+
+    return tf.convert_to_tensor(inputs), tf.convert_to_tensor(labels)
 
 
-
-def get_data(midi_folder, batch_size):
+def get_data(midi_folder, window_size):
 	"""
 	Herbert
 	Does all the preprocessing
@@ -255,26 +203,26 @@ def get_data(midi_folder, batch_size):
 	                  PAD_TOKEN: chr(35),
 	                  REST_TOKEN: chr(36)}
 	ascii_to_id = {}
-	corpus_ascii_batches = []
+	corpus_note_id_batches = []
 	corpus_durations_batches = []
 	corpus_offsets_batches = []
 
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder)[105:106] # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder)[105:107] # TODO - use this to only get some files if necessary
 
 	for elm in midi_files:
 		m21_score = midi_to_m21(midi_folder + "\\" + elm) # this returns the m21 score object
 		# this gets the list of notes,chords, rests, and the list of durations
 		score, durations, offsets = get_notes_and_durations(m21_score)
-		pitch_score = pitchify(score)
-		ascii_score = asciify(pitch_score, pitch_to_ascii)
-		id_score = idfy(ascii_score, ascii_to_id)
+		pitch_score = note_pitchify(score)
+		ascii_score = note_asciify(pitch_score, pitch_to_ascii)
+		id_score = note_idify(ascii_score, ascii_to_id)
 
 
 		piece_len = len(id_score)
-		num_batches = piece_len // batch_size
-		ascii_score_batches = tf.reshape(id_score[:num_batches*batch_size], [num_batches, -1])
+		num_batches = piece_len // window_size
+		ascii_score_batches = tf.reshape(id_score[:num_batches*window_size], [num_batches, -1])
 
 		# # this should get a dict of unique_ids mapped to durations
 		# duration_dictionary = amend_duration_dictionary(duration_dictionary, durations)
@@ -283,11 +231,13 @@ def get_data(midi_folder, batch_size):
 		# # this should get a dict of unique_ids mapped to a pitch
 		# pitch_dictionary, pitch_string_dict = amend_pitch_dictionary(pitch_dictionary, pitch_string_dict, score)
 		# pitches_unique_ids = pitches_to_id(score, pitch_dictionary, pitch_string_dict)
-		corpus_ascii_batches.extend(ascii_score_batches)
+		corpus_note_id_batches.extend(ascii_score_batches)
 	#return pieces, durations, pitch_dictionary, duration_dictionary, pad_token_id
-	return corpus_ascii_batches, ascii_to_id
+	corpus_note_id_batches = tf.convert_to_tensor(corpus_note_id_batches)
+	note_id_inputs, note_id_labels = get_inputs_and_labels(corpus_note_id_batches)
+	return note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii
 
 # IDs allocation
 # 1000 - 100000: reserved for durations
 # 100 - 900: reserved for pitches
-print(get_data(r"C:\Users\dhruv\PycharmProjects\CSCI1470\Liszt_Comprehension\data\Scarlatti", 250))
+#print(get_data(r"C:\Users\dhruv\PycharmProjects\CSCI1470\Liszt_Comprehension\data\Scarlatti", 250))

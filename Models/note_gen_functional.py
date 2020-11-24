@@ -6,7 +6,7 @@ from keras_multi_head import MultiHeadAttention
 # from preprocess ...
 
 
-def create_note_gen_network(note_vocab_size, is_training=False):
+def create_note_gen_network(note_vocab_size):
     embedding_size = 30
 
     model = tf.keras.Sequential()
@@ -15,14 +15,12 @@ def create_note_gen_network(note_vocab_size, is_training=False):
 
     model.add(Bidirectional(GRU(100, return_sequences=True)))
     model.add(MultiHeadAttention(head_num=4))
-    if is_training:
-        model.add(Dropout(0.3))
+    model.add(Dropout(0.3))
 
     model.add(Bidirectional(GRU(100, return_sequences=True)))
     model.add(Dense(int(note_vocab_size/2)))
     model.add(tf.keras.layers.LeakyReLU(0.2))
-    if is_training:
-        model.add(Dropout(0.3))
+    model.add(Dropout(0.3))
 
     model.add(Dense(note_vocab_size, activation='softmax'))
 

@@ -4,7 +4,9 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras import Model
 import time
-#from preprocess ...
+from Liszt_Comprehension.Models.note_gen_functional import *
+from Liszt_Comprehension.processing.preprocess import *
+from Liszt_Comprehension.processing.generate_midi import *
 
 
 def note_train(model, train_inputs, train_labels):
@@ -89,6 +91,9 @@ def duration_test(model, train_notes, train_duration, duration_padding_index):
 
     pass
 
+def reverse_dictionary(dictionary):
+    return {value: key for key, value in dictionary.items()}
+
 def main():
     '''get data, init models, sys_arguments stuff,
      train and test note gen, mid process, train and test duration gen, post processing '''
@@ -103,10 +108,19 @@ def main():
     # need note_gen_train_inputs and note_gen_train_labels (these are the same but shifted by 1)
     # need note_gen_test_inputs and note_gen_test_labels (these are the same but shifted by 1)
     # need note_vocab
+    note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii = get_data(
+        r"C:\Users\dhruv\PycharmProjects\CSCI1470\Liszt_Comprehension\data\Scarlatti", 250)
 
+    id_to_ascii = reverse_dictionary(ascii_to_id)
+    ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
     # TODO - initialize NoteGen model
+    note_model = create_note_gen_network(len(id_to_ascii))
     # TODO - train NoteGen model
+    #train_note_gen(note_model, note_id_inputs, note_id_labels)
     # TODO - test NoteGen model - print perplexity
+
+    initial_note_ascii = "$"
+    generate_midi(note_model, id_to_ascii, {}, ascii_to_pitch, initial_note_ascii, 250)
 
     note_gen_time = time.time()
     print("Time elapsed for NoteGen training/testing = {} minutes".format((note_gen_time - start_time)/60))

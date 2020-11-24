@@ -1,8 +1,8 @@
 import tensorflow as tf
 import numpy as np
 
-from Models.note_gen_functional import *
-from processing.generate_midi import *
+from Liszt_Comprehension.Models.note_gen_functional import *
+from Liszt_Comprehension.processing.generate_midi import *
 
 
 def test_generate():
@@ -36,6 +36,7 @@ def test_train():
 
 
 #test_train()
+
 
 
 
