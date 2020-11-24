@@ -2,6 +2,8 @@ from music21 import *
 from fractions import Fraction
 import os
 import random
+import numpy as np
+import tensorflow as tf
 # ToDo: (general)
 # import necessary packages
 # figure out where to take care of chord permutations
@@ -82,8 +84,6 @@ def amend_pitch_dictionary(pitch_dict: dict, pitch_string_dict: dict, pitch: flo
 	# for each element in pitches, make a unique key mapped to it
 
 
-
-
 	for thing in pitches:
 
 		unique_id = ""
@@ -109,6 +109,29 @@ def amend_pitch_dictionary(pitch_dict: dict, pitch_string_dict: dict, pitch: flo
 		pitch_string_dict[str(thing)] = unique_id
 
 	return pitch_dict, pitch_string_dict
+
+
+def pitchify(score: list):
+	pitches = []
+	for thing in score:
+		if isinstance(thing, note.Note):
+			# if thing is a note
+			pitch_thing = [thing.nameWithOctave]
+
+		elif isinstance(thing, chord.Chord):
+			# if thing is a chord
+			pitch_thing = [note_obj.nameWithOctave for note_obj in thing.pitches]
+
+		elif isinstance(thing, note.Rest):
+			# if thing is a rest
+			pitch_thing = [REST_TOKEN]
+
+		else:
+			pitch_thing = [REST_TOKEN]
+
+		pitches.append(pitch_thing)
+	return pitches
+
 
 
 def amend_duration_dictionary(duration_dictionary: dict, durations: list):
@@ -178,8 +201,34 @@ def duration_to_id(durations: list, duration_dictionary: dict) -> list:
 	return durations_unique_ids
 
 
+def asciify(chords: list, ascii_dict):
+	ascii_piece = []
+	for chord in chords:
+		ascii_chord = []
+		for pitch in chord:
+			if pitch not in ascii_dict:
+				ascii_dict[pitch] = chr(len(ascii_dict) + 33)
 
-def get_data(midi_folder):
+			ascii_chord.append(ascii_dict[pitch])
+		ascii_piece.append("".join(ascii_chord))
+
+	return ascii_piece
+
+
+def idfy(asciis: list, id_dict):
+	id_piece = []
+	for ascii in asciis:
+		if ascii not in id_dict:
+			id_dict[ascii] = len(id_dict)
+
+		id_piece.append(id_dict[ascii])
+
+	return id_piece
+
+
+
+
+def get_data(midi_folder, batch_size):
 	"""
 	Herbert
 	Does all the preprocessing
@@ -191,44 +240,54 @@ def get_data(midi_folder):
 			pad_token_id
 	"""
 
-	pad_token_id = 0 # this is a placeholder
-	duration_dictionary = {}
-	pieces = []
-	durations = []
-	max_length = 0
-	pitch_dictionary = {}
-	pitch_string_dict = {}
-	ascii_to_id_dict = {}
+	# pad_token_id = 0 # this is a placeholder
+	# duration_dictionary = {}
+	# pieces = []
+	# durations = []
+	# max_length = 0
+	# pitch_dictionary = {}
+	# pitch_string_dict = {}
+	# ascii_to_id_dict = {}
+	#
 
 	pitch_to_ascii = {START_TOKEN: chr(33),
 	                  STOP_TOKEN: chr(34),
 	                  PAD_TOKEN: chr(35),
 	                  REST_TOKEN: chr(36)}
+	ascii_to_id = {}
+	corpus_ascii_batches = []
+	corpus_durations_batches = []
+	corpus_offsets_batches = []
+
 
 	# list of files in midi_folder
-	#midi_files = os.listdir(midi_folder)
+	midi_files = os.listdir(midi_folder)[105:106] # TODO - use this to only get some files if necessary
 
-	for elm in midi_folder:
-
-		m21_score = midi_to_m21(elm) # this returns the m21 score object
+	for elm in midi_files:
+		m21_score = midi_to_m21(midi_folder + "\\" + elm) # this returns the m21 score object
 		# this gets the list of notes,chords, rests, and the list of durations
 		score, durations, offsets = get_notes_and_durations(m21_score)
-		ammend_ascii_pitch_dict(score)
-		ascii_score = ascify(score)
-		# this should get a dict of unique_ids mapped to durations
-		duration_dictionary = amend_duration_dictionary(duration_dictionary, durations)
-		durations_unique_ids = duration_to_id(durations, duration_dictionary)
-
-		# this should get a dict of unique_ids mapped to a pitch
-		pitch_dictionary, pitch_string_dict = amend_pitch_dictionary(pitch_dictionary, pitch_string_dict, score)
-		pitches_unique_ids = pitches_to_id(score, pitch_dictionary, pitch_string_dict)
+		pitch_score = pitchify(score)
+		ascii_score = asciify(pitch_score, pitch_to_ascii)
+		id_score = idfy(ascii_score, ascii_to_id)
 
 
-		pad_and_token()
-		# take final padded chords and durations
-	return pieces, durations, pitch_dictionary, duration_dictionary, pad_token_id
+		piece_len = len(id_score)
+		num_batches = piece_len // batch_size
+		ascii_score_batches = tf.reshape(id_score[:num_batches*batch_size], [num_batches, -1])
+
+		# # this should get a dict of unique_ids mapped to durations
+		# duration_dictionary = amend_duration_dictionary(duration_dictionary, durations)
+		# durations_unique_ids = duration_to_id(durations, duration_dictionary)
+		#
+		# # this should get a dict of unique_ids mapped to a pitch
+		# pitch_dictionary, pitch_string_dict = amend_pitch_dictionary(pitch_dictionary, pitch_string_dict, score)
+		# pitches_unique_ids = pitches_to_id(score, pitch_dictionary, pitch_string_dict)
+		corpus_ascii_batches.extend(ascii_score_batches)
+	#return pieces, durations, pitch_dictionary, duration_dictionary, pad_token_id
+	return corpus_ascii_batches, ascii_to_id
 
 # IDs allocation
 # 1000 - 100000: reserved for durations
 # 100 - 900: reserved for pitches
-#get_data('/Users/ford/Documents/Classes/DL/Liszt-Comprehension/data/Scarlatti/k001.mid')
+print(get_data(r"C:\Users\dhruv\PycharmProjects\CSCI1470\Liszt_Comprehension\data\Scarlatti", 250))
