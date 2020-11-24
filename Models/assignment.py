@@ -1,8 +1,8 @@
 import sys
 import time
-from Models.note_gen_functional import *
-from processing.preprocess import *
-from processing.generate_midi import *
+from Liszt_Comprehension.Models.note_gen_functional import *
+from Liszt_Comprehension.processing.preprocess import *
+from Liszt_Comprehension.processing.generate_midi import *
 
 
 def duration_train(model, train_notes, train_duration, duration_padding_index):
@@ -54,7 +54,7 @@ def main():
     # need note_gen_test_inputs and note_gen_test_labels (these are the same but shifted by 1)
     # need note_vocab
     note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii = get_data(
-        r"/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt_Comprehension/data/Scarlatti", 250)
+        r"C:\Users\dhruv\PycharmProjects\CSCI1470\Liszt_Comprehension\data\Scarlatti", 250)
 
     id_to_ascii = reverse_dictionary(ascii_to_id)
     ascii_to_pitch = reverse_dictionary(pitch_to_ascii)

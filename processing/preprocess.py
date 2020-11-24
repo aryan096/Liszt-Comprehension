@@ -226,7 +226,7 @@ def get_data(midi_folder, window_size: int):
 	corpus_offsets_batches = []
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder) # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder)[:50] # TODO - use this to only get some files if necessary
 
 	for elm in midi_files:
 		if re.match('[a-z0-9_]*\.mid[i]?', elm) is not None:
