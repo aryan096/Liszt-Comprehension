@@ -1,8 +1,8 @@
 import tensorflow as tf
 import numpy as np
 
-from Liszt_Comprehension.Models.note_gen_functional import *
-from Liszt_Comprehension.processing.generate_midi import *
+from Models.note_gen_functional import *
+from processing.generate_midi import *
 
 
 def test_generate():
@@ -23,7 +23,7 @@ def get_inputs_and_labels(data):
 
 def test_train():
     fake_id_to_ascii_dict = {i: l for i, l in enumerate("ABCDEFGHIJK")}
-    model = create_network(len(fake_id_to_ascii_dict))
+    model = create_note_gen_network(len(fake_id_to_ascii_dict))
 
     fake_data = np.array([[np.random.choice(range(11)) for _ in range(50)],
                                 [np.random.choice(range(11)) for _ in range(50)]])
@@ -35,7 +35,7 @@ def test_train():
     print("success!")
 
 
-test_train()
+#test_train()
 
 
 

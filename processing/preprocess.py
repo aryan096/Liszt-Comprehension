@@ -12,6 +12,7 @@ import random
 PAD_TOKEN = "**PAD**"
 STOP_TOKEN = "**STOP**"
 START_TOKEN = "**START**"
+REST_TOKEN = "rest"
 
 def midi_to_m21(file_path: str):
 	"""
@@ -26,34 +27,63 @@ def midi_to_m21(file_path: str):
 	return m21_midi
 
 
-def get_notes_and_durations(score) -> (list, list):
+def get_notes_and_durations(score) -> (list, list, list):
 	"""
 	Converts a music21 object to list of chords(notes, chords, rests) and list of durations
 	:param piece: a piece of music as a music21 object
-	:return: a list of chords and a list of durations of length number_of_chords_in_piece
+	:return: a list of chords, a list of durations, and a list of offsets of length number_of_chords_in_piece
 	"""
 	sounds = []
 	durations = []
+	offset = []
+	chords = []
 	# This loop goes through everything in the score, adds notes, chords, and
 	# rests to the sounds list, and durations to the durations list
 	for sound in score.flat.elements:
 		# add durations
 		durations.append(sound.duration.quarterLength)
+		offset.append(sound.offset)
 
 	try: # file has instrument parts
 		sounds = instrument.partitionByInstrument(score).parts[0].recurse()
 	except: # file has notes in a flat structure
 		sounds = score.flat.notesAndRests
 
-	return sounds, durations
+	return sounds, durations, offset
 
-def amend_pitch_dictionary(pitch_dict: dict, pitch_string_dict: dict, pitches: list) -> (dict, dict):
+
+def incrementalize_offset(offset: list) -> list:
+	offset = [0] + offset
+	return [x-offset[i] for i, x in enumerate(offset[1:])]
+
+
+def accumulate_offset(incremental_offset: list) -> list:
+	out = [incremental_offset[0]]
+	for i in range(len(incremental_offset) - 1):
+		out.append(out[i]+incremental_offset[i+1])
+	return out
+
+def ammend_ascii_pitch_dict(ascii_dict, pitches):
+	for note in pitches:
+		if note not in ascii_dict:
+			ascii_dict[pitch] = chr(len(ascii_dict) + 33)
+
+def construct_vocab(ascii_corpus: list):
+	ascii_corpus
+
+
+
+def amend_pitch_dictionary(pitch_dict: dict, pitch_string_dict: dict, pitch: float) -> (dict, dict):
 	"""
 	Given the current dictionary and pitches, update it
 	:return: dictionary mapping pitch to a unique integer identifier
 	"""
 
 	# for each element in pitches, make a unique key mapped to it
+
+
+
+
 	for thing in pitches:
 
 		unique_id = ""
@@ -166,22 +196,25 @@ def get_data(midi_folder):
 	pieces = []
 	durations = []
 	max_length = 0
-	pitch_dictionary =  {}
+	pitch_dictionary = {}
 	pitch_string_dict = {}
 	ascii_to_id_dict = {}
+
+	pitch_to_ascii = {START_TOKEN: chr(33),
+	                  STOP_TOKEN: chr(34),
+	                  PAD_TOKEN: chr(35),
+	                  REST_TOKEN: chr(36)}
 
 	# list of files in midi_folder
 	#midi_files = os.listdir(midi_folder)
 
 	for elm in midi_folder:
 
-		m21_score = midi_to_m21(midi_folder) # this returns the m21 score object
+		m21_score = midi_to_m21(elm) # this returns the m21 score object
 		# this gets the list of notes,chords, rests, and the list of durations
-		score, durations = get_notes_and_durations(m21_score)
-		# check for max length
-		if len(durations) > max_length:
-			max_length = len(durations)
-
+		score, durations, offsets = get_notes_and_durations(m21_score)
+		ammend_ascii_pitch_dict(score)
+		ascii_score = ascify(score)
 		# this should get a dict of unique_ids mapped to durations
 		duration_dictionary = amend_duration_dictionary(duration_dictionary, durations)
 		durations_unique_ids = duration_to_id(durations, duration_dictionary)
@@ -198,4 +231,4 @@ def get_data(midi_folder):
 # IDs allocation
 # 1000 - 100000: reserved for durations
 # 100 - 900: reserved for pitches
-get_data('/Users/ford/Documents/Classes/DL/Liszt-Comprehension/data/Scarlatti/k001.mid')
+#get_data('/Users/ford/Documents/Classes/DL/Liszt-Comprehension/data/Scarlatti/k001.mid')

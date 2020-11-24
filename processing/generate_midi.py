@@ -11,7 +11,7 @@ def generate_notes(model, id_to_ascii_dict: dict, initial_note_ascii: str, lengt
 	:param length: desired piece length
 	:return: a generated piece of ASCII characters
 	"""
-	sample_n = 10
+	sample_n = 10  # The top sample_n chords are chosen from randomly when generating the next chord of the piece
 	reverse_dictionary = {ascii: id for id, ascii in id_to_ascii_dict.items()}
 
 	first_note_id = reverse_dictionary[initial_note_ascii]
@@ -20,7 +20,9 @@ def generate_notes(model, id_to_ascii_dict: dict, initial_note_ascii: str, lengt
 
 	for i in range(length):
 		probs = model.predict(next_input)
+		print(probs.shape)
 		probs = np.array(probs[0, 0, :])
+
 		top_note_ids = np.argsort(probs)[-sample_n:]
 		top_probs = np.exp(probs[top_note_ids]) / sum(np.exp(probs[top_note_ids]))
 		next_chord_id = np.random.choice(top_note_ids, p=top_probs)
@@ -100,13 +102,19 @@ def generate_midi(note_model, id_ascii_dict: dict, id_duration_dict: dict, ascii
 	:return: None
 	"""
 	composed_piece = generate_notes(note_model, id_ascii_dict, initial_note_ascii, length)
+
 	if duration_model:
 		id_durations = generate_durations(duration_model, composed_piece)
 		durations = id_to_duration(id_durations, id_duration_dict)
 	else:
 		durations = None
+
 	ascii_notes = id_to_ascii(composed_piece, id_ascii_dict)
 	piece = ascii_to_m21(ascii_notes, ascii_m21_dict, durations)
+
+	# Saves a midi file containing the generated piece called generated_piece.midi to the current directory
 	piece.write("midi", "generated_piece.midi")
+
+	# Opens a MusicXML reader and shows the sheet music for the generated piece
 	piece.show()  # only works if MusicXML reader like MuseScore, Finale, or Sibelius is installed
 

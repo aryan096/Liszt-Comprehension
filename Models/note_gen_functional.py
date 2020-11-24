@@ -5,6 +5,7 @@ from keras.layers import Dense, Dropout, GRU, Activation, Bidirectional, Flatten
 from keras_multi_head import MultiHeadAttention
 # from preprocess ...
 
+
 def create_note_gen_network(note_vocab_size, is_training=False):
     embedding_size = 30
 
@@ -39,4 +40,4 @@ def train_note_gen(model, input_data, labels):
 
 
 def test_note_gen(model, input_data, labels):
-    model.evaluate(input_data, labels, batch_size = 250)
+    model.evaluate(input_data, labels, batch_size=250)
