@@ -1,9 +1,8 @@
 from music21 import *
-from fractions import Fraction
 import os
 import random
-import numpy as np
 import tensorflow as tf
+import re
 # ToDo: (general)
 # import necessary packages
 # figure out where to take care of chord permutations
@@ -19,6 +18,7 @@ START_TOKEN = "**START**"
 START_ASCII = chr(33)
 REST_TOKEN = "rest"
 REST_ASCII = chr(36)
+
 
 def midi_to_m21(file_path: str):
 	"""
@@ -36,7 +36,7 @@ def midi_to_m21(file_path: str):
 def get_notes_and_durations(score) -> (list, list, list):
 	"""
 	Converts a music21 object to list of chords(notes, chords, rests) and list of durations
-	:param piece: a piece of music as a music21 object
+	:param score: a piece of music as a music21 object
 	:return: a list of chords, a list of durations, and a list of offsets of length number_of_chords_in_piece
 	"""
 	sounds = []
@@ -209,29 +209,30 @@ def get_data(midi_folder, window_size):
 
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder)[105:107] # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder) # TODO - use this to only get some files if necessary
 
 	for elm in midi_files:
-		m21_score = midi_to_m21(midi_folder + "\\" + elm) # this returns the m21 score object
-		# this gets the list of notes,chords, rests, and the list of durations
-		score, durations, offsets = get_notes_and_durations(m21_score)
-		pitch_score = note_pitchify(score)
-		ascii_score = note_asciify(pitch_score, pitch_to_ascii)
-		id_score = note_idify(ascii_score, ascii_to_id)
+		if re.match('[a-z0-9_]*\.mid[i]?', elm) is not None:
+			m21_score = midi_to_m21(midi_folder + "/" + elm) # this returns the m21 score object
+			# this gets the list of notes,chords, rests, and the list of durations
+			score, durations, offsets = get_notes_and_durations(m21_score)
+			pitch_score = note_pitchify(score)
+			ascii_score = note_asciify(pitch_score, pitch_to_ascii)
+			id_score = note_idify(ascii_score, ascii_to_id)
 
 
-		piece_len = len(id_score)
-		num_batches = piece_len // window_size
-		ascii_score_batches = tf.reshape(id_score[:num_batches*window_size], [num_batches, -1])
+			piece_len = len(id_score)
+			num_batches = piece_len // window_size
+			ascii_score_batches = tf.reshape(id_score[:num_batches*window_size], [num_batches, -1])
 
-		# # this should get a dict of unique_ids mapped to durations
-		# duration_dictionary = amend_duration_dictionary(duration_dictionary, durations)
-		# durations_unique_ids = duration_to_id(durations, duration_dictionary)
-		#
-		# # this should get a dict of unique_ids mapped to a pitch
-		# pitch_dictionary, pitch_string_dict = amend_pitch_dictionary(pitch_dictionary, pitch_string_dict, score)
-		# pitches_unique_ids = pitches_to_id(score, pitch_dictionary, pitch_string_dict)
-		corpus_note_id_batches.extend(ascii_score_batches)
+			# # this should get a dict of unique_ids mapped to durations
+			# duration_dictionary = amend_duration_dictionary(duration_dictionary, durations)
+			# durations_unique_ids = duration_to_id(durations, duration_dictionary)
+			#
+			# # this should get a dict of unique_ids mapped to a pitch
+			# pitch_dictionary, pitch_string_dict = amend_pitch_dictionary(pitch_dictionary, pitch_string_dict, score)
+			# pitches_unique_ids = pitches_to_id(score, pitch_dictionary, pitch_string_dict)
+			corpus_note_id_batches.extend(ascii_score_batches)
 	#return pieces, durations, pitch_dictionary, duration_dictionary, pad_token_id
 	corpus_note_id_batches = tf.convert_to_tensor(corpus_note_id_batches)
 	note_id_inputs, note_id_labels = get_inputs_and_labels(corpus_note_id_batches)

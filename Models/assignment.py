@@ -1,68 +1,8 @@
-import os
 import sys
-import tensorflow as tf
-import numpy as np
-from tensorflow.keras import Model
 import time
-from Liszt_Comprehension.Models.note_gen_functional import *
-from Liszt_Comprehension.processing.preprocess import *
-from Liszt_Comprehension.processing.generate_midi import *
-
-
-def note_train(model, train_inputs, train_labels):
-    '''
-
-    :param model:
-    :param train_inputs: train inputs (all inputs for training) of shape (num_pieces, piece_length)
-    :param train_labels: train labels (all labels for training) of shape (num_pieces, piece_length)
-    :return:
-    '''
-
-    print("Begin Training")
-    num_trained = 0
-    while num_trained < len(train_inputs):
-        input_batch = train_inputs[num_trained:num_trained + model.batch_size]
-        label_batch = train_labels[num_trained:num_trained + model.batch_size]
-
-        with tf.GradientTape() as tape:
-            probabilities, _ = model(input_batch, None)
-            loss = model.loss(probabilities, label_batch)
-
-        num_trained += model.batch_size
-        if num_trained % (model.batch_size) == 0:
-            print("      Loss on training after {} trained inputs: {}".format(num_trained * model.window_size, loss))
-
-        gradients = tape.gradient(loss, model.trainable_variables)
-        model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-    pass
-
-def note_test(model, test_inputs, test_labels):
-    '''
-    Runs through one epoch - all testing examples
-
-    :param model: the trained model to use for prediction
-    :param test_inputs: train inputs (all inputs for testing) of shape (num_inputs,)
-    :param test_labels: train labels (all labels for testing) of shape (num_labels,)
-    :returns: perplexity of the test set
-    '''
-
-    print("Begin Testing")
-    loss_list = []
-    num_tested = 0
-    while num_tested < len(test_inputs):
-        input_batch = test_inputs[num_tested:num_tested + model.batch_size]
-        label_batch = test_labels[num_tested:num_tested + model.batch_size]
-
-        probabilities, _ = model(input_batch, None)
-        loss = model.loss(probabilities, label_batch)
-        loss_list.append(loss)
-
-        num_tested += model.batch_size
-        if num_tested % (model.batch_size) == 0:
-            print("      Tested {} inputs".format(num_tested * model.window_size))
-
-    return tf.exp(tf.reduce_mean(loss_list))
+from Models.note_gen_functional import *
+from processing.preprocess import *
+from processing.generate_midi import *
 
 def duration_train(model, train_notes, train_duration, duration_padding_index):
     '''
@@ -109,14 +49,14 @@ def main():
     # need note_gen_test_inputs and note_gen_test_labels (these are the same but shifted by 1)
     # need note_vocab
     note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii = get_data(
-        r"C:\Users\dhruv\PycharmProjects\CSCI1470\Liszt_Comprehension\data\Scarlatti", 250)
+        r"/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt_Comprehension/data/Scarlatti", 250)
 
     id_to_ascii = reverse_dictionary(ascii_to_id)
     ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
     # TODO - initialize NoteGen model
     note_model = create_note_gen_network(len(id_to_ascii))
     # TODO - train NoteGen model
-    #train_note_gen(note_model, note_id_inputs, note_id_labels)
+    train_note_gen(note_model, note_id_inputs, note_id_labels)
     # TODO - test NoteGen model - print perplexity
 
     initial_note_ascii = "$"
