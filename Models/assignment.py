@@ -4,8 +4,9 @@ from Models.note_gen_functional import *
 from processing.preprocess import *
 from processing.generate_midi import *
 
+
 def duration_train(model, train_notes, train_duration, duration_padding_index):
-    '''
+    """
     Runs through one epoch - all training examples.
 
     :param model: the initialized model to use for forward and backward pass
@@ -13,12 +14,11 @@ def duration_train(model, train_notes, train_duration, duration_padding_index):
     :param train_duration: duration train data (all data for training) of shape (num_pieces, piece_length)
     :param duration_padding_index: the padding index, the id of *PAD* token. This integer is used when masking padding labels.
     :return: None
-    '''
-
+    """
     pass
 
 def duration_test(model, train_notes, train_duration, duration_padding_index):
-    '''
+    """
     Runs through one epoch - all testing examples.
 
     :param model: the initialized model to use for forward and backward pass
@@ -27,11 +27,16 @@ def duration_test(model, train_notes, train_duration, duration_padding_index):
     :param duration_padding_index: the padding index, the id of *PAD* token. This integer is used when masking padding labels.
     :returns: a tuple containing at index 0 the perplexity of the test set and at index 1 the per symbol accuracy on test set,
     e.g. (my_perplexity, my_accuracy)
-    '''
+    """
 
     pass
 
-def reverse_dictionary(dictionary):
+def reverse_dictionary(dictionary: dict) -> dict:
+    """
+    Reverses a bijective dictionary
+    :param dictionary: a bijective dictionary
+    :return: the input dictionary with keys ad values reversed
+    """
     return {value: key for key, value in dictionary.items()}
 
 def main():

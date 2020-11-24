@@ -4,10 +4,10 @@ import random
 import tensorflow as tf
 import re
 # ToDo: (general)
-# import necessary packages
-# figure out where to take care of chord permutations
+# 1. figure out where to take care of chord permutations
 #   some ideas: if pitches are ints, always sort each chord from lowest pitch to highest pitch before asciiing
 #               check through each generated ascii and compare to all other asciis for permutations
+# 2. Find way to store parsed files
 
 
 PAD_TOKEN = "**PAD**"
@@ -29,7 +29,7 @@ def midi_to_m21(file_path: str):
 	"""
 	file_path_split = file_path.split('/')
 	print('parsing ' + file_path_split[len(file_path_split) - 1] + ' ...')
-	m21_midi = converter.parse(file_path) # This will return a score object
+	m21_midi = converter.parse(file_path)  # This will return a score object
 	return m21_midi
 
 
@@ -39,10 +39,8 @@ def get_notes_and_durations(score) -> (list, list, list):
 	:param score: a piece of music as a music21 object
 	:return: a list of chords, a list of durations, and a list of offsets of length number_of_chords_in_piece
 	"""
-	sounds = []
 	durations = []
 	offset = []
-	chords = []
 	# This loop goes through everything in the score, adds notes, chords, and
 	# rests to the sounds list, and durations to the durations list
 	for sound in score.flat.elements:
@@ -50,27 +48,42 @@ def get_notes_and_durations(score) -> (list, list, list):
 		durations.append(sound.duration.quarterLength)
 		offset.append(sound.offset)
 
-	try: # file has instrument parts
+	try:  # file has instrument parts
 		sounds = instrument.partitionByInstrument(score).parts[0].recurse()
-	except: # file has notes in a flat structure
+	except:  # file has notes in a flat structure
 		sounds = score.flat.notesAndRests
 
 	return sounds, durations, offset
 
 
 def incrementalize_offset(offset: list) -> list:
+	"""
+	Incrementalizes offsets
+	:param offset: a list of offsets
+	:return: incrementalized list of offsets
+	"""
 	offset = [0] + offset
 	return [x-offset[i] for i, x in enumerate(offset[1:])]
 
 
 def accumulate_offset(incremental_offset: list) -> list:
+	"""
+	Accumulates offsets
+	:param incremental_offset: a list of incremental offsets
+	:return: incrementalized list of accumulated offsets
+	"""
 	out = [incremental_offset[0]]
 	for i in range(len(incremental_offset) - 1):
 		out.append(out[i]+incremental_offset[i+1])
 	return out
 
 
-def note_pitchify(score: list):
+def note_pitchify(score: list) -> list:
+	"""
+	Takes a sequence of music21 objects and converts it to a list of lists containing pitch names with octaves
+	:param score: a list of music21 objects
+	:return: a list of lists containing note names with octaves
+	"""
 	pitches = []
 	for thing in score:
 		if isinstance(thing, note.Note):
@@ -86,11 +99,11 @@ def note_pitchify(score: list):
 			pitch_thing = [REST_TOKEN]
 
 		else:
+			# if thing is magically something else
 			pitch_thing = [REST_TOKEN]
 
 		pitches.append(pitch_thing)
 	return pitches
-
 
 
 def amend_duration_dictionary(duration_dictionary: dict, durations: list):
@@ -114,6 +127,7 @@ def amend_duration_dictionary(duration_dictionary: dict, durations: list):
 
 	return duration_dictionary
 
+
 def pad_and_token(max_length: int, stripped_piece: list) -> list:
 	"""
 	Pad each piece, now in ASCII form, to fit length of longest piece and add a start and stop token
@@ -136,16 +150,20 @@ def duration_to_id(durations: list, duration_dictionary: dict) -> list:
 	:param duration_dictionary: a dictionary mapping durations to integer ids
 	:return: a list of integers of length length_of_longest_piece
 	"""
-
 	durations_unique_ids = []
-
-	for duration in durations:
-		durations_unique_ids.append(duration_dictionary[duration])
+	for duration_length in durations:
+		durations_unique_ids.append(duration_dictionary[duration_length])
 
 	return durations_unique_ids
 
 
-def note_asciify(chords: list, ascii_dict):
+def note_asciify(chords: list, ascii_dict: dict) -> list:
+	"""
+	Turns strings of note names and rests into ASCII characters
+	:param chords: a list of lists of note names
+	:param ascii_dict: a dictionary mapping note name to ASCII
+	:return: a list of ascii characters
+	"""
 	ascii_piece = []
 	for chord in chords:
 		ascii_chord = []
@@ -160,6 +178,12 @@ def note_asciify(chords: list, ascii_dict):
 
 
 def note_idify(asciis: list, id_dict):
+	"""
+	Turns ascii characters into unique IDs
+	:param asciis: a list of ASCII characters
+	:param id_dict: a dictionary mapping ASCII characters to IDs
+	:return:
+	"""
 	id_piece = []
 	for ascii in asciis:
 		if ascii not in id_dict:
@@ -169,35 +193,29 @@ def note_idify(asciis: list, id_dict):
 
 	return id_piece
 
+
 def get_inputs_and_labels(data):
-    inputs = [data[i][:-1] for i in range(len(data))]
-    labels = [data[i][1:] for i in range(len(data))]
-
-    return tf.convert_to_tensor(inputs), tf.convert_to_tensor(labels)
-
-
-def get_data(midi_folder, window_size):
 	"""
-	Herbert
+	Produces labels and inputs for given data
+	:param data: tensor or array of size (batch_size, window_size)
+	:return: two tensors of size (batch_size, window_size - 1)
+	"""
+	inputs = [data[i][:-1] for i in range(len(data))]
+	labels = [data[i][1:] for i in range(len(data))]
+	return tf.convert_to_tensor(inputs), tf.convert_to_tensor(labels)
+
+
+def get_data(midi_folder, window_size: int):
+	"""
 	Does all the preprocessing
 	:param midi_folder: a directory of all midi files
+	:param window_size: window size for data
 	:return: notes in pieces as an id array of shape [num_pieces, max_piece_length],
 			durations in pieces as an id array of shape [num_pieces, max_piece_length],
 			dictionary mapping id's to ASCII characters,
 			dictionary mapping id's to durations,
 			pad_token_id
 	"""
-
-	# pad_token_id = 0 # this is a placeholder
-	# duration_dictionary = {}
-	# pieces = []
-	# durations = []
-	# max_length = 0
-	# pitch_dictionary = {}
-	# pitch_string_dict = {}
-	# ascii_to_id_dict = {}
-	#
-
 	pitch_to_ascii = {START_TOKEN: chr(33),
 	                  STOP_TOKEN: chr(34),
 	                  PAD_TOKEN: chr(35),
@@ -207,38 +225,26 @@ def get_data(midi_folder, window_size):
 	corpus_durations_batches = []
 	corpus_offsets_batches = []
 
-
 	# list of files in midi_folder
 	midi_files = os.listdir(midi_folder) # TODO - use this to only get some files if necessary
 
 	for elm in midi_files:
 		if re.match('[a-z0-9_]*\.mid[i]?', elm) is not None:
-			m21_score = midi_to_m21(midi_folder + "/" + elm) # this returns the m21 score object
-			# this gets the list of notes,chords, rests, and the list of durations
+			m21_score = midi_to_m21(midi_folder + "/" + elm)  # this returns the m21 score object
+			# this gets the list of notes/chords/rests, the list of durations, and the list of offsets
 			score, durations, offsets = get_notes_and_durations(m21_score)
 			pitch_score = note_pitchify(score)
 			ascii_score = note_asciify(pitch_score, pitch_to_ascii)
 			id_score = note_idify(ascii_score, ascii_to_id)
 
-
+			# batches pieces
 			piece_len = len(id_score)
 			num_batches = piece_len // window_size
 			ascii_score_batches = tf.reshape(id_score[:num_batches*window_size], [num_batches, -1])
-
-			# # this should get a dict of unique_ids mapped to durations
-			# duration_dictionary = amend_duration_dictionary(duration_dictionary, durations)
-			# durations_unique_ids = duration_to_id(durations, duration_dictionary)
-			#
-			# # this should get a dict of unique_ids mapped to a pitch
-			# pitch_dictionary, pitch_string_dict = amend_pitch_dictionary(pitch_dictionary, pitch_string_dict, score)
-			# pitches_unique_ids = pitches_to_id(score, pitch_dictionary, pitch_string_dict)
 			corpus_note_id_batches.extend(ascii_score_batches)
-	#return pieces, durations, pitch_dictionary, duration_dictionary, pad_token_id
+
 	corpus_note_id_batches = tf.convert_to_tensor(corpus_note_id_batches)
 	note_id_inputs, note_id_labels = get_inputs_and_labels(corpus_note_id_batches)
 	return note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii
 
-# IDs allocation
-# 1000 - 100000: reserved for durations
-# 100 - 900: reserved for pitches
 #print(get_data(r"C:\Users\dhruv\PycharmProjects\CSCI1470\Liszt_Comprehension\data\Scarlatti", 250))
