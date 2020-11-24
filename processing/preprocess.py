@@ -4,10 +4,7 @@ import random
 import tensorflow as tf
 import re
 # ToDo: (general)
-# 1. figure out where to take care of chord permutations
-#   some ideas: if pitches are ints, always sort each chord from lowest pitch to highest pitch before asciiing
-#               check through each generated ascii and compare to all other asciis for permutations
-# 2. Find way to store parsed files
+# 2. Find way to store data (ary)
 
 
 PAD_TOKEN = "**PAD**"
@@ -43,15 +40,15 @@ def get_notes_and_durations(score) -> (list, list, list):
 	offset = []
 	# This loop goes through everything in the score, adds notes, chords, and
 	# rests to the sounds list, and durations to the durations list
-	for sound in score.flat.elements:
-		# add durations
-		durations.append(sound.duration.quarterLength)
-		offset.append(sound.offset)
-
 	try:  # file has instrument parts
 		sounds = instrument.partitionByInstrument(score).parts[0].recurse()
 	except:  # file has notes in a flat structure
 		sounds = score.flat.notesAndRests
+
+	for sound in sounds:
+		# add durations
+		durations.append(sound.duration.quarterLength)
+		offset.append(sound.offset)
 
 	return sounds, durations, offset
 
@@ -172,6 +169,7 @@ def note_asciify(chords: list, ascii_dict: dict) -> list:
 				ascii_dict[pitch] = chr(len(ascii_dict) + 33)
 
 			ascii_chord.append(ascii_dict[pitch])
+		ascii_chord.sort()  # Takes care of chord permutations
 		ascii_piece.append("".join(ascii_chord))
 
 	return ascii_piece

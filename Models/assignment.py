@@ -1,8 +1,8 @@
 import sys
 import time
-from Liszt_Comprehension.Models.note_gen_functional import *
-from Liszt_Comprehension.processing.preprocess import *
-from Liszt_Comprehension.processing.generate_midi import *
+from Models.note_gen_functional import *
+from processing.preprocess import *
+from processing.generate_midi import *
 
 
 def duration_train(model, train_notes, train_duration, duration_padding_index):
@@ -16,6 +16,7 @@ def duration_train(model, train_notes, train_duration, duration_padding_index):
     :return: None
     """
     pass
+
 
 def duration_test(model, train_notes, train_duration, duration_padding_index):
     """
@@ -31,6 +32,7 @@ def duration_test(model, train_notes, train_duration, duration_padding_index):
 
     pass
 
+
 def reverse_dictionary(dictionary: dict) -> dict:
     """
     Reverses a bijective dictionary
@@ -38,6 +40,7 @@ def reverse_dictionary(dictionary: dict) -> dict:
     :return: the input dictionary with keys ad values reversed
     """
     return {value: key for key, value in dictionary.items()}
+
 
 def main():
     '''get data, init models, sys_arguments stuff,

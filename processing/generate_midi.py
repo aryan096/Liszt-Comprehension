@@ -1,6 +1,6 @@
 from music21 import *
 import numpy as np
-from Liszt_Comprehension.processing.preprocess import REST_ASCII
+from processing.preprocess import REST_ASCII
 
 
 def generate_notes(model, id_to_ascii_dict: dict, initial_note_ascii: str, length: int) -> list:
@@ -21,8 +21,7 @@ def generate_notes(model, id_to_ascii_dict: dict, initial_note_ascii: str, lengt
 
 	for i in range(length):
 		probs = model.predict(next_input)
-		#print(probs.shape)
-		probs = np.array(probs[0, -1, :]) # output of model is 3D
+		probs = np.array(probs[0, -1, :])  # output of model is 3D
 
 		top_note_ids = np.argsort(probs)[-sample_n:]
 		top_probs = np.exp(probs[top_note_ids]) / sum(np.exp(probs[top_note_ids]))
@@ -94,7 +93,7 @@ def ascii_to_m21(ascii_notes: list, ascii_to_m21_dict: dict, durations_and_offse
 def generate_midi(note_model, id_ascii_dict: dict, id_duration_offset_dict: dict, ascii_m21_dict: dict,
                   initial_note_ascii: str, length: int, duration_model=None) -> None:
 	"""
-	Does the complete postprocessing using above-defined helper functions and saves a file called "second_ever_piece.midi"
+	Does the complete postprocessing using above-defined helper functions and saves a file called "first_ever_piece.midi"
 	to the current directory
 	:param note_model: model that generates notes
 	:param id_ascii_dict: dictionary mapping ids to ASCII
@@ -115,8 +114,8 @@ def generate_midi(note_model, id_ascii_dict: dict, id_duration_offset_dict: dict
 
 	piece = ascii_to_m21(composed_piece, ascii_m21_dict, durations_and_offsets)
 
-	# Saves a midi file containing the generated piece called second_ever_piece.midi to the current directory
-	piece.write("midi", "second_ever_piece.midi")
+	# Saves a midi file containing the generated piece called first_ever_piece.midi to the current directory
+	piece.write("midi", "generated_piece.midi")
 
 	# Opens a MusicXML reader and shows the sheet music for the generated piece
 	#piece.show()  # only works if MusicXML reader like MuseScore, Finale, or Sibelius is installed
