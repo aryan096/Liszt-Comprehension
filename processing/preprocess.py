@@ -51,7 +51,9 @@ def get_notes_and_durations(score) -> (list, list, list):
 		durations.append(sound.duration.quarterLength)
 		offset.append(sound.offset)
 
-	return sounds, durations, offset
+	incremented_offsets = incrementalize_offset(offset)
+	duration_offset_tuples = zip(durations, incremented_offsets)
+	return sounds, duration_offset_tuples
 
 
 def incrementalize_offset(offset: list) -> list:
@@ -140,19 +142,35 @@ def pad_and_token(max_length: int, stripped_piece: list) -> list:
 	padded = []
 	return padded
 
+#
+# def duration_to_id(durations: list, duration_dictionary: dict) -> list:
+# 	"""
+# 	Turn each duration in durations into its unique id
+# 	:param durations: a list of durations of length length_of_longest_piece
+# 	:param duration_dictionary: a dictionary mapping durations to integer ids
+# 	:return: a list of integers of length length_of_longest_piece
+# 	"""
+# 	durations_unique_ids = []
+# 	for duration_length in durations:
+# 		durations_unique_ids.append(duration_dictionary[duration_length])
+#
+# 	return durations_unique_ids
 
-def duration_to_id(durations: list, duration_dictionary: dict) -> list:
+def duration_offset_idify(duration_offsets: list, duration_id_dict):
 	"""
 	Turn each duration in durations into its unique id
-	:param durations: a list of durations of length length_of_longest_piece
-	:param duration_dictionary: a dictionary mapping durations to integer ids
+	:param duration_offsets: a list of durations, offset tuples
+	:param duration_id_dict: a dictionary mapping durations,offset tuple to integer ids
 	:return: a list of integers of length length_of_longest_piece
 	"""
-	durations_unique_ids = []
-	for duration_length in durations:
-		durations_unique_ids.append(duration_dictionary[duration_length])
+	duration_offset_id_piece = []
+	for tuple in duration_offsets:
+		if tuple not in duration_id_dict:
+			duration_id_dict[tuple] = len(duration_id_dict)
 
-	return durations_unique_ids
+		duration_offset_id_piece.append(duration_id_dict[tuple])
+
+	return duration_offset_id_piece
 
 
 def note_asciify(chords: list, ascii_dict: dict) -> list:
@@ -205,24 +223,30 @@ def get_inputs_and_labels(data):
 
 def read_dicts_from_file():
 	"""
-	Reads pitch_to_ascii and ascii_to_id from the db_dict file
-	:return: pitch_to_ascii and ascii_to_id
+	Reads everything from the db_dict file
+	:return: note_id_input, note_id_labels, pitch_to_ascii and ascii_to_id and duration_offset_dict
 	"""
     # for reading also binary mode is important
 	dict_db_file = open('dict_db', 'rb')
 	dict_db = pickle.load(dict_db_file)
-	return dict_db['pitch_to_ascii'], dict_db['ascii_to_id']
+	return dict_db['note_id_inputs'], dict_db['note_id_labels'], dict_db['pitch_to_ascii'], dict_db['ascii_to_id'], dict_db['duration_offset_dict']
 
-def write_dicts_to_file(pitch_to_ascii, ascii_to_id):
+def write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to_id, duration_offset_dict):
 	"""
 	Writes the two dicts to a file
 	:param pitch_to_ascii: pitch to ascii dict
 	:param ascii_to_id: ascii to id dict
+	:param note_id_inputs:
+	:param note_id_labels:
+	:param duration_offset_dict:
 	"""
 	# pickle code to write the dictionaries to a file
 	dict_db = {}
 	dict_db['pitch_to_ascii'] = pitch_to_ascii
 	dict_db['ascii_to_id'] = ascii_to_id
+	dict_db['note_id_inputs'] = note_id_inputs
+	dict_db['note_id_labels'] = note_id_labels
+	dict_db['duration_offset_dict'] = duration_offset_dict
 	dict_db_file = open('dict_db', 'wb')
     # source, destination
 	pickle.dump(dict_db, dict_db_file)
@@ -239,8 +263,13 @@ def get_data(midi_folder, window_size: int):
 			dictionary mapping id's to durations,
 			pad_token_id
 	"""
+	# initialize the dicts
+	pitch_to_ascii = {}
+	ascii_to_id = {}
+	duration_offset_dict = {}
+
 	# read the dicts stored in the binary file
-	pitch_to_ascii, ascii_to_id = read_dicts_from_file()
+	#_, _, pitch_to_ascii, ascii_to_id, duration_offset_dict = read_dicts_from_file()
 
 	# add the necessary token stuff to the dict (although it is probably in it anyway)
 	pitch_to_ascii[START_TOKEN] = chr(33)
@@ -249,17 +278,17 @@ def get_data(midi_folder, window_size: int):
 	pitch_to_ascii[REST_TOKEN] = chr(36)
 
 	corpus_note_id_batches = []
-	corpus_durations_batches = []
-	corpus_offsets_batches = []
+	corpus_duration_offset_batches = []
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder)[:50] # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder)[:2] # TODO - use this to only get some files if necessary
 
 	for elm in midi_files:
 		if re.match('[a-z0-9_]*\.mid[i]?', elm) is not None:
 			m21_score = midi_to_m21(midi_folder + "/" + elm)  # this returns the m21 score object
 			# this gets the list of notes/chords/rests, the list of durations, and the list of offsets
-			score, durations, offsets = get_notes_and_durations(m21_score)
+			score, duration_offset_tuples = get_notes_and_durations(m21_score)
+			id_duration_offsets = duration_offset_idify(duration_offset_tuples, duration_offset_dict)
 			pitch_score = note_pitchify(score)
 			ascii_score = note_asciify(pitch_score, pitch_to_ascii)
 			id_score = note_idify(ascii_score, ascii_to_id)
@@ -268,14 +297,20 @@ def get_data(midi_folder, window_size: int):
 			piece_len = len(id_score)
 			num_batches = piece_len // window_size
 			ascii_score_batches = tf.reshape(id_score[:num_batches*window_size], [num_batches, -1])
+			duration_offset_batches = tf.reshape(id_duration_offsets[:num_batches*window_size], [num_batches, -1])
 			corpus_note_id_batches.extend(ascii_score_batches)
+			corpus_duration_offset_batches.extend(duration_offset_batches)
 
 	corpus_note_id_batches = tf.convert_to_tensor(corpus_note_id_batches)
 	note_id_inputs, note_id_labels = get_inputs_and_labels(corpus_note_id_batches)
 
+	corpus_duration_offset_batches = tf.convert_to_tensor(corpus_duration_offset_batches)
+	duration_offset_id_inputs, duration_offset_id_labels = get_inputs_and_labels(corpus_duration_offset_batches)
+
 	# function call to write the dictionaries to a file
-	write_dicts_to_file(pitch_to_ascii, ascii_to_id)
+	print(duration_offset_dict)
+	write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to_id, duration_offset_dict)
 
 	return note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii
 
-#(get_data(r"../data/Liszt/01pasali.mid", 250))
+(get_data(r"/Users/ford/Documents/classes/DL/Liszt-Comprehension/data/Liszt", 250))
