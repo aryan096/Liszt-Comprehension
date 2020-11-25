@@ -3,6 +3,7 @@ import os
 import random
 import tensorflow as tf
 import re
+import pickle
 # ToDo: (general)
 # 2. Find way to store data (ary)
 
@@ -202,6 +203,30 @@ def get_inputs_and_labels(data):
 	labels = [data[i][1:] for i in range(len(data))]
 	return tf.convert_to_tensor(inputs), tf.convert_to_tensor(labels)
 
+def read_dicts_from_file():
+	"""
+	Reads pitch_to_ascii and ascii_to_id from the db_dict file
+	:return: pitch_to_ascii and ascii_to_id
+	"""
+    # for reading also binary mode is important
+	dict_db_file = open('dict_db', 'rb')
+	dict_db = pickle.load(dict_db_file)
+	return dict_db['pitch_to_ascii'], dict_db['ascii_to_id']
+
+def write_dicts_to_file(pitch_to_ascii, ascii_to_id):
+	"""
+	Writes the two dicts to a file
+	:param pitch_to_ascii: pitch to ascii dict
+	:param ascii_to_id: ascii to id dict
+	"""
+	# pickle code to write the dictionaries to a file
+	dict_db = {}
+	dict_db['pitch_to_ascii'] = pitch_to_ascii
+	dict_db['ascii_to_id'] = ascii_to_id
+	dict_db_file = open('dict_db', 'wb')
+    # source, destination
+	pickle.dump(dict_db, dict_db_file)
+	dict_db_file.close()
 
 def get_data(midi_folder, window_size: int):
 	"""
@@ -214,11 +239,15 @@ def get_data(midi_folder, window_size: int):
 			dictionary mapping id's to durations,
 			pad_token_id
 	"""
-	pitch_to_ascii = {START_TOKEN: chr(33),
-	                  STOP_TOKEN: chr(34),
-	                  PAD_TOKEN: chr(35),
-	                  REST_TOKEN: chr(36)}
-	ascii_to_id = {}
+	# read the dicts stored in the binary file
+	pitch_to_ascii, ascii_to_id = read_dicts_from_file()
+
+	# add the necessary token stuff to the dict (although it is probably in it anyway)
+	pitch_to_ascii[START_TOKEN] = chr(33)
+	pitch_to_ascii[STOP_TOKEN] = chr(34)
+	pitch_to_ascii[PAD_TOKEN] = chr(35)
+	pitch_to_ascii[REST_TOKEN] = chr(36)
+
 	corpus_note_id_batches = []
 	corpus_durations_batches = []
 	corpus_offsets_batches = []
@@ -243,6 +272,10 @@ def get_data(midi_folder, window_size: int):
 
 	corpus_note_id_batches = tf.convert_to_tensor(corpus_note_id_batches)
 	note_id_inputs, note_id_labels = get_inputs_and_labels(corpus_note_id_batches)
+
+	# function call to write the dictionaries to a file
+	write_dicts_to_file(pitch_to_ascii, ascii_to_id)
+
 	return note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii
 
-#print(get_data(r"C:\Users\dhruv\PycharmProjects\CSCI1470\Liszt_Comprehension\data\Scarlatti", 250))
+#(get_data(r"../data/Liszt/01pasali.mid", 250))
