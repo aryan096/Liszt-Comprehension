@@ -1,8 +1,8 @@
 import tensorflow as tf
 import numpy as np
 
-from Liszt_Comprehension.Models.note_gen_functional import *
-from Liszt_Comprehension.processing.generate_midi import *
+from Models.note_gen_functional import *
+from processing.generate_midi import *
 
 
 def test_generate():
@@ -33,6 +33,8 @@ def test_train():
     train_note_gen(model, fake_input, fake_labels)
     print(test_note_gen(model, fake_input, fake_labels))
     print("success!")
+
+def test_processing():
 
 
 #test_train()

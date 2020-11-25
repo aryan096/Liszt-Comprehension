@@ -41,13 +41,11 @@ def get_notes_and_durations(score) -> (list, list, list):
 	offset = []
 	# This loop goes through everything in the score, adds notes, chords, and
 	# rests to the sounds list, and durations to the durations list
-	try:  # file has instrument parts
-		sounds = instrument.partitionByInstrument(score).parts[0].recurse()
-	except:  # file has notes in a flat structure
-		sounds = score.flat.notesAndRests
+	sounds = score.flat.notesAndRests
 
 	for sound in sounds:
 		# add durations
+		print(sound, sound.duration.quarterLength)
 		durations.append(sound.duration.quarterLength)
 		offset.append(sound.offset)
 
@@ -66,16 +64,7 @@ def incrementalize_offset(offset: list) -> list:
 	return [x-offset[i] for i, x in enumerate(offset[1:])]
 
 
-def accumulate_offset(incremental_offset: list) -> list:
-	"""
-	Accumulates offsets
-	:param incremental_offset: a list of incremental offsets
-	:return: incrementalized list of accumulated offsets
-	"""
-	out = [incremental_offset[0]]
-	for i in range(len(incremental_offset) - 1):
-		out.append(out[i]+incremental_offset[i+1])
-	return out
+
 
 
 def note_pitchify(score: list) -> list:
@@ -313,4 +302,4 @@ def get_data(midi_folder, window_size: int):
 
 	return note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii
 
-(get_data(r"/Users/ford/Documents/classes/DL/Liszt-Comprehension/data/Liszt", 250))
+get_data(r"/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt_Comprehension/data/Scarlatti", 250)

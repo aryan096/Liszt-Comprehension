@@ -37,6 +37,14 @@ def generate_durations_and_offsets(model, piece):
 	# Implement generate durations
 	return []
 
+def reverse_dictionary(dictionary: dict) -> dict:
+	"""
+    Reverses a bijective dictionary
+    :param dictionary: a bijective dictionary
+    :return: the input dictionary with keys ad values reversed
+    """
+	return {value: key for key, value in dictionary.items()}
+
 
 def id_to_ascii(id_piece: list, id_to_ascii_dict: dict) -> list:
 	"""
@@ -49,15 +57,28 @@ def id_to_ascii(id_piece: list, id_to_ascii_dict: dict) -> list:
 	return ascii_piece
 
 
-def id_to_duration(id_durations: list, id_to_duration_dict: dict) -> list:
+def id_to_duration_offsets(id_durations: list, duration_offset_to_id_dict: dict) -> list:
 	"""
 	Turn a generated list of duratino ids into a list of durations
 	:param id_durations: a list of durations by the model in id form
-	:param id_to_duration_dict: a dictionary mapping id to duration
+	:param duration_offset_to_id_dict: a dictionary mapping id to duration
 	:return: a list of durations
 	"""
-	durations = [id_to_duration_dict[id] for id in id_durations]
+	id_to_duration_offset_dict = reverse_dictionary(duration_offset_to_id_dict)
+	durations = [id_to_duration_offset_dict[duration_offset] for duration_offset in id_durations]
 	return durations
+
+def accumulate_offset(incremental_offset: list) -> list:
+	"""
+	Accumulates offsets
+	:param incremental_offset: a list of incremental offsets
+	:return: incrementalized list of accumulated offsets
+	"""
+	out = [incremental_offset[0]]
+	for i in range(len(incremental_offset) - 1):
+		out.append(out[i]+incremental_offset[i+1])
+	return out
+
 
 def ascii_to_m21(ascii_notes: list, ascii_to_m21_dict: dict, durations_and_offsets=None):
 	"""
@@ -83,9 +104,11 @@ def ascii_to_m21(ascii_notes: list, ascii_to_m21_dict: dict, durations_and_offse
 			piece.append(note.Note(ascii_to_m21_dict[chord_string]))
 	if durations_and_offsets:
 		assert len(ascii_notes) == len(durations_and_offsets)
-		for i, (duration, offset) in enumerate(durations_and_offsets):
-			piece[i].duration.quarterLength = duration
-			piece[i].offset = offset
+		durations = [elm[0] for elm in durations_and_offsets]
+		accumulated_offsets = accumulate_offset([elm[1] for elm in durations_and_offsets])
+		for i in range(len(durations)):
+			piece[i].duration.quarterLength = durations[i]
+			piece[i].offset = accumulated_offsets[i]
 
 	return piece
 
@@ -108,7 +131,7 @@ def generate_midi(note_model, id_ascii_dict: dict, id_duration_offset_dict: dict
 
 	if duration_model:
 		id_durations_and_offsets = generate_durations_and_offsets(duration_model, composed_piece)
-		durations_and_offsets = id_to_duration(id_durations_and_offsets, id_duration_offset_dict)
+		durations_and_offsets = id_to_duration_offsets(id_durations_and_offsets, id_duration_offset_dict)
 	else:
 		durations_and_offsets = None
 
