@@ -1,7 +1,7 @@
 import tensorflow as tf
-from Encoder import Encoder
-from Decoder import Decoder
-from positionalencoding import create_masks
+from Transformers.Encoder import Encoder
+from Transformers.Decoder import Decoder
+from Transformers.positionalencoding import create_masks
 class Transformer(tf.keras.Model):
   def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size, 
                target_vocab_size, rate=0.1):

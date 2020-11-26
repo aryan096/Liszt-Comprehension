@@ -1,6 +1,7 @@
 from music21 import *
 import numpy as np
-from processing.preprocess import REST_ASCII
+import tensorflow as tf
+from processing.preprocess import REST_ASCII, START_ID, STOP_ID, START_TOKEN
 
 
 def generate_notes(model, id_to_ascii_dict: dict, initial_note_ascii: str, length: int) -> list:
@@ -29,13 +30,35 @@ def generate_notes(model, id_to_ascii_dict: dict, initial_note_ascii: str, lengt
 
 		ascii_piece.append(id_to_ascii_dict[next_chord_id])
 		next_input[0].append(next_chord_id)
-	return ascii_piece
+	return ascii_piece, next_input
 
 
 def generate_durations_and_offsets(model, piece):
+	"""
+
+	:param model: trained duration_gen model
+	:param piece: generated sequence of note ids (with an extended dim)
+	:return:
+	"""
 	# ToDo:
 	# Implement generate durations
-	return []
+	sample_n = 10  # The top sample_n chords are chosen from randomly when generating the next chord of the piece
+
+	first_dot_id = START_ID
+	encoder_input = [[START_ID] + piece + [STOP_ID]]
+	print(encoder_input)
+	next_input = [[first_dot_id]]
+
+	for i in range(len(piece)):
+		probs = model.call(tf.convert_to_tensor(encoder_input), tf.convert_to_tensor(next_input))
+		probs = np.array(probs[0, -1, :])  # output of model is 3D
+
+		top_note_ids = np.argsort(probs)[-sample_n:]
+		top_probs = np.exp(probs[top_note_ids]) / sum(np.exp(probs[top_note_ids]))
+		next_dot_id = np.random.choice(top_note_ids, p=top_probs)
+
+		next_input[0].append(next_dot_id)
+	return next_input
 
 def reverse_dictionary(dictionary: dict) -> dict:
 	"""
@@ -57,15 +80,14 @@ def id_to_ascii(id_piece: list, id_to_ascii_dict: dict) -> list:
 	return ascii_piece
 
 
-def id_to_duration_offsets(id_durations: list, duration_offset_to_id_dict: dict) -> list:
+def id_to_duration_offsets(id_durations: list, id_to_dot_dict: dict) -> list:
 	"""
 	Turn a generated list of duratino ids into a list of durations
 	:param id_durations: a list of durations by the model in id form
 	:param duration_offset_to_id_dict: a dictionary mapping id to duration
 	:return: a list of durations
 	"""
-	id_to_duration_offset_dict = reverse_dictionary(duration_offset_to_id_dict)
-	durations = [id_to_duration_offset_dict[duration_offset] for duration_offset in id_durations]
+	durations = [id_to_dot_dict[duration_offset] for duration_offset in id_durations]
 	return durations
 
 def accumulate_offset(incremental_offset: list) -> list:
@@ -86,7 +108,7 @@ def ascii_to_m21(ascii_notes: list, ascii_to_m21_dict: dict, durations_and_offse
 	:param ascii_notes: a piece of music in ascii form
 	:param ascii_to_m21_dict: dictionary mapping ASCII characters to m21 objects
 	:param durations: a list of durations
-	:param offsets: a list of accumulated offsets
+	:param offsets: a list of incremental offsets
 	:return: music21 Stream object
 	"""
 	# can i assume start, stop, and pad are in neither notes nor durations?
@@ -102,7 +124,13 @@ def ascii_to_m21(ascii_notes: list, ascii_to_m21_dict: dict, durations_and_offse
 			piece.append(note.Rest())
 		else:
 			piece.append(note.Note(ascii_to_m21_dict[chord_string]))
+
 	if durations_and_offsets:
+		print(ascii_notes, durations_and_offsets)
+		if durations_and_offsets[0] == START_TOKEN:
+			durations_and_offsets = durations_and_offsets[1:]
+		if START_ID in durations_and_offsets:
+			raise Exception("there is a start token where there shouldn't be")
 		assert len(ascii_notes) == len(durations_and_offsets)
 		durations = [elm[0] for elm in durations_and_offsets]
 		accumulated_offsets = accumulate_offset([elm[1] for elm in durations_and_offsets])
@@ -127,18 +155,21 @@ def generate_midi(note_model, id_ascii_dict: dict, id_duration_offset_dict: dict
 	:param duration_model: model that generates durations
 	:return: None
 	"""
-	composed_piece = generate_notes(note_model, id_ascii_dict, initial_note_ascii, length)
+	composed_piece, composed_id_piece = generate_notes(note_model, id_ascii_dict, initial_note_ascii, length)
+	#print(id_ascii_dict)
+	#print(composed_piece)
+	print(composed_id_piece)
 
 	if duration_model:
-		id_durations_and_offsets = generate_durations_and_offsets(duration_model, composed_piece)
-		durations_and_offsets = id_to_duration_offsets(id_durations_and_offsets, id_duration_offset_dict)
+		id_durations_and_offsets = generate_durations_and_offsets(duration_model, composed_id_piece[0])
+		durations_and_offsets = id_to_duration_offsets(id_durations_and_offsets[0], id_duration_offset_dict)
 	else:
 		durations_and_offsets = None
 
 	piece = ascii_to_m21(composed_piece, ascii_m21_dict, durations_and_offsets)
 
 	# Saves a midi file containing the generated piece called first_ever_piece.midi to the current directory
-	piece.write("midi", "generated_piece.midi")
+	piece.write("midi", "first_ever_durationed_piece.midi")
 
 	# Opens a MusicXML reader and shows the sheet music for the generated piece
 	#piece.show()  # only works if MusicXML reader like MuseScore, Finale, or Sibelius is installed

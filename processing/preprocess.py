@@ -12,10 +12,13 @@ PAD_TOKEN = "**PAD**"
 PAD_ASCII = chr(35)
 STOP_TOKEN = "**STOP**"
 STOP_ASCII = chr(34)
+STOP_ID = 1
 START_TOKEN = "**START**"
 START_ASCII = chr(33)
+START_ID = 0
 REST_TOKEN = "rest"
 REST_ASCII = chr(36)
+WINDOW_SIZE = 250
 
 
 def midi_to_m21(file_path: str):
@@ -29,6 +32,16 @@ def midi_to_m21(file_path: str):
 	print('parsing ' + file_path_split[len(file_path_split) - 1] + ' ...')
 	m21_midi = converter.parse(file_path)  # This will return a score object
 	return m21_midi
+
+
+def incrementalize_offset(offset: list) -> list:
+	"""
+	Incrementalizes offsets
+	:param offset: a list of offsets
+	:return: incrementalized list of offsets
+	"""
+	offset = [0] + offset
+	return [x-offset[i] for i, x in enumerate(offset[1:])]
 
 
 def get_notes_and_durations(score) -> (list, list, list):
@@ -52,18 +65,6 @@ def get_notes_and_durations(score) -> (list, list, list):
 	incremented_offsets = incrementalize_offset(offset)
 	duration_offset_tuples = zip(durations, incremented_offsets)
 	return sounds, duration_offset_tuples
-
-
-def incrementalize_offset(offset: list) -> list:
-	"""
-	Incrementalizes offsets
-	:param offset: a list of offsets
-	:return: incrementalized list of offsets
-	"""
-	offset = [0] + offset
-	return [x-offset[i] for i, x in enumerate(offset[1:])]
-
-
 
 
 
@@ -213,21 +214,21 @@ def get_inputs_and_labels(data):
 def read_dicts_from_file():
 	"""
 	Reads everything from the db_dict file
-	:return: note_id_input, note_id_labels, pitch_to_ascii and ascii_to_id and duration_offset_dict
+	:return: note_id_input, note_id_labels, pitch_to_ascii and ascii_to_id and dot_to_id
 	"""
     # for reading also binary mode is important
 	dict_db_file = open('dict_db', 'rb')
 	dict_db = pickle.load(dict_db_file)
-	return dict_db['note_id_inputs'], dict_db['note_id_labels'], dict_db['pitch_to_ascii'], dict_db['ascii_to_id'], dict_db['duration_offset_dict']
+	return dict_db['note_id_inputs'], dict_db['note_id_labels'], dict_db['pitch_to_ascii'], dict_db['ascii_to_id'], dict_db['dot_to_id']
 
-def write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to_id, duration_offset_dict):
+def write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to_id, dot_to_id):
 	"""
 	Writes the two dicts to a file
 	:param pitch_to_ascii: pitch to ascii dict
 	:param ascii_to_id: ascii to id dict
 	:param note_id_inputs:
 	:param note_id_labels:
-	:param duration_offset_dict:
+	:param dot_to_id:
 	"""
 	# pickle code to write the dictionaries to a file
 	dict_db = {}
@@ -235,7 +236,7 @@ def write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to
 	dict_db['ascii_to_id'] = ascii_to_id
 	dict_db['note_id_inputs'] = note_id_inputs
 	dict_db['note_id_labels'] = note_id_labels
-	dict_db['duration_offset_dict'] = duration_offset_dict
+	dict_db['dot_to_id'] = dot_to_id
 	dict_db_file = open('dict_db', 'wb')
     # source, destination
 	pickle.dump(dict_db, dict_db_file)
@@ -255,7 +256,7 @@ def get_data(midi_folder, window_size: int):
 	# initialize the dicts
 	pitch_to_ascii = {}
 	ascii_to_id = {}
-	duration_offset_dict = {}
+	dot_to_id = {START_TOKEN: START_ID, STOP_TOKEN: STOP_ID}
 
 	# read the dicts stored in the binary file
 	#_, _, pitch_to_ascii, ascii_to_id, duration_offset_dict = read_dicts_from_file()
@@ -270,14 +271,14 @@ def get_data(midi_folder, window_size: int):
 	corpus_duration_offset_batches = []
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder)[:] # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder)[:2] # TODO - use this to only get some files if necessary
 
 	for elm in midi_files:
-		if re.match('[a-z0-9_]*\.mid[i]?', elm) is not None:
-			m21_score = midi_to_m21(midi_folder + "/" + elm)  # this returns the m21 score object
+		if re.match('.*\.mid[i]?', elm) is not None: #TODO - fix if wrong
+			m21_score = midi_to_m21(midi_folder + "\\" + elm)  # this returns the m21 score object
 			# this gets the list of notes/chords/rests, the list of durations, and the list of offsets
 			score, duration_offset_tuples = get_notes_and_durations(m21_score)
-			id_duration_offsets = duration_offset_idify(duration_offset_tuples, duration_offset_dict)
+			id_duration_offsets = duration_offset_idify(duration_offset_tuples, dot_to_id)
 			pitch_score = note_pitchify(score)
 			ascii_score = note_asciify(pitch_score, pitch_to_ascii)
 			id_score = note_idify(ascii_score, ascii_to_id)
@@ -298,8 +299,36 @@ def get_data(midi_folder, window_size: int):
 
 	# function call to write the dictionaries to a file
 	#print(duration_offset_dict)
-	write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to_id, duration_offset_dict)
+	write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to_id, dot_to_id)
 
-	return corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, duration_offset_dict, corpus_duration_offset_batches
+	return corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches
 
-#get_data(r"/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt_Comprehension/data/Scarlatti", 250)
+
+def prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_id_batches):
+	"""
+
+	:param corpus_note_id_batches:
+	:param corpus_duration_offset_id_batches:
+	:return:
+	"""
+	#prepped_note_id_batches = tf.convert_to_tensor([])
+	corpus_note_id_batches = list(corpus_note_id_batches.numpy())
+	corpus_duration_offset_id_batches = list(corpus_duration_offset_id_batches.numpy())
+	for i in range(len(corpus_note_id_batches)):
+		corpus_note_id_batches[i] = [START_ID] + list(corpus_note_id_batches[i]) + [STOP_ID]
+		corpus_duration_offset_id_batches[i] = [START_ID] + list(corpus_duration_offset_id_batches[i]) + [STOP_ID]
+
+	prepped_note_id_batches = tf.convert_to_tensor(corpus_note_id_batches)
+	prepped_dot_id_batches = tf.convert_to_tensor(corpus_duration_offset_id_batches)
+
+	return prepped_note_id_batches, prepped_dot_id_batches
+
+
+
+#corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
+#	r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin", WINDOW_SIZE)
+
+#print(corpus_note_id_batches, corpus_duration_offset_batches)
+#print(prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches))
+
+

@@ -36,7 +36,6 @@ class DurationGen(Model):
         self.dense1 = tf.keras.layers.Dense(300, activation='relu') # TODO - change as required
         self.dense2 = tf.keras.layers.Dense(self.duration_vocab_size, activation='softmax') # TODO - change as required
         # TODO - add more dense layers if necessary
-        pass
 
     def call(self, encoder_input, decoder_input):
         '''

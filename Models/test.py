@@ -5,6 +5,7 @@ from Models.note_gen_functional import *
 from processing.generate_midi import *
 from Models.duration_gen import *
 from Models.assignment import *
+from Models.duration_gen2 import *
 
 
 def test_generate():
@@ -44,13 +45,33 @@ def test_duration_gen():
         r'C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin', 250
     )
 
-    model = DurationGen(len(ascii_to_id), len(duration_offset_dict), 250)
+
+    model = DurationGen2(len(ascii_to_id), len(duration_offset_dict), 250)
+    prepped_note_ids, prepped_dot_ids = prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches)
 
 
-    duration_train(model, corpus_note_id_batches, corpus_duration_offset_batches)
+    duration2_train(model, prepped_note_ids, prepped_dot_ids)
+    #print(corpus_duration_offset_batches[0:1])
+    #print(corpus_note_id_batches[0][0:1])
+    out = model(tf.convert_to_tensor([prepped_note_ids[0]]), tf.convert_to_tensor([[START_ID, 1]]))
+    print(out)
 
     # perplexity, accuracy = duration_test(model, test_french, test_english, eng_padding_index)
     # print("Model Perplexity = {}".format(perplexity))
     # print("Model Accuracy = {}".format(accuracy))
 
-test_duration_gen()
+#test_duration_gen()
+
+def test_dot_gen():
+    corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, duration_offset_dict, corpus_duration_offset_batches = get_data(
+        r'C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin', WINDOW_SIZE
+    )
+
+    model = DurationGen2(len(ascii_to_id), len(duration_offset_dict), 250)
+    prepped_note_ids, prepped_dot_ids = prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches)
+
+    duration2_train(model, prepped_note_ids, prepped_dot_ids)
+
+    print(generate_durations_and_offsets(model, prepped_note_ids[0]))
+
+test_dot_gen()

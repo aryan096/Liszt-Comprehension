@@ -1,12 +1,59 @@
-import sys
-import time
-from Models.note_gen_functional import *
-from processing.preprocess import *
-from processing.generate_midi import *
-from Models.duration_gen2 import *
+import tensorflow as tf
+import numpy as np
+from tensorflow.keras import Model
+from keras.layers import Dense, Dropout, GRU, Activation, Bidirectional, Flatten
+from keras_multi_head import MultiHeadAttention
+from Transformers.Transformer import *
+
+class DurationGen2(Model):
+    def __init__(self, note_vocab_size, duration_vocab_size, piece_length):
+        '''initialize hyperparams, layers, optimizers'''
+        # TODO - this might all change after re-implementing transformers
+
+        super(DurationGen2, self).__init__()
+
+        self.piece_length = piece_length
+        self.note_vocab_size = note_vocab_size
+        self.duration_vocab_size = duration_vocab_size
+
+        self.batch_size = 100 # TODO - change as required, increase if GPU
+        self.embedding_size = 30 # TODO - change as required
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+
+        #self.note_embedding = tf.keras.layers.Embedding(self.note_vocab_size, self.embedding_size)
+        #self.duration_embedding = tf.keras.layers.Embedding(self.duration_vocab_size, self.embedding_size)
+
+        self.trans = Transformer(1, 100, 4, 100, self.note_vocab_size, self.duration_vocab_size, 0.3)
+        self.soft = tf.keras.layers.Activation('softmax')
+
+    def call(self, encoder_input, decoder_input):
+        '''
+        use Attention encoders and Attention decoders along with dense layers after.
+
+        :param encoder_input: batched IDs corresponding to notes
+        :param decoder_input: batched IDs corresponding to durations
+        :return: The 3d probabilities as a tensor, [batch_size x piece_length x duration_vocab_size]
+        '''
+        # 1) Add the positional embeddings to french sentence embeddings
+        #note_embeddings = self.note_embedding(encoder_input)
+        #duration_embeddings = self.duration_embedding(decoder_input)
+        out, _ = self.trans.call((encoder_input, decoder_input))
+        out = self.soft(out)
+        return out
+
+    def loss_function(self, prbs, labels):
+        '''
+
+        :param prbs: (batch_size, piece_length, duration_vocab_size)
+        :param labels: (batch_size, piece_length)
+        :param mask: padding mask [batch_size x piece_length]
+        :return: reduce mean of sparse_categorical_loss
+        '''
+
+        return tf.reduce_sum(tf.keras.losses.sparse_categorical_crossentropy(labels, prbs))
 
 
-def duration_train(model, train_notes, train_duration):
+def duration2_train(model, train_notes, train_duration):
     """
     Runs through one epoch - all training examples.
 
@@ -41,7 +88,7 @@ def duration_train(model, train_notes, train_duration):
 
 
 
-def duration_test(model, test_notes, test_duration):
+def duration2_test(model, test_notes, test_duration):
     """
     Runs through one epoch - all testing examples.
 
@@ -81,57 +128,3 @@ def duration_test(model, test_notes, test_duration):
 
     return np.exp(total_loss / total_words), total_accuracy / total_words
 
-
-def reverse_dictionary(dictionary: dict) -> dict:
-    """
-    Reverses a bijective dictionary
-    :param dictionary: a bijective dictionary
-    :return: the input dictionary with keys ad values reversed
-    """
-    return {value: key for key, value in dictionary.items()}
-
-
-def main():
-    '''get data, init models, sys_arguments stuff,
-     train and test note gen, mid process, train and test duration gen, post processing '''
-    if len(sys.argv) != 2 or sys.argv[1] not in {"NOTE", "NOTE_DURATION"}:
-        print("USAGE: python assignment.py <Model Type>")
-        print("<Model Type>: [NOTE/NOTE_DURATION]")
-        exit()
-
-    start_time = time.time()
-
-    # TODO - get data using pre-processing:
-    # need note_gen_train_inputs and note_gen_train_labels (these are the same but shifted by 1)
-    # need note_gen_test_inputs and note_gen_test_labels (these are the same but shifted by 1)
-    # need note_vocab
-    corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
-        r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin", WINDOW_SIZE)
-
-    id_to_ascii = reverse_dictionary(ascii_to_id)
-    ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
-    # TODO - initialize NoteGen model
-    note_model = create_note_gen_network(len(id_to_ascii))
-    # TODO - train NoteGen model
-    #train_note_gen(note_model, note_id_inputs, note_id_labels)
-    # TODO - test NoteGen model - print perplexity
-
-    note_gen_time = time.time()
-    print("Time elapsed for NoteGen training/testing = {} minutes".format((note_gen_time - start_time)/60))
-
-    # TODO - if NOTE_DURATION, then do the same for the duration model
-    if sys.argv[1] == "NOTE_DURATION":
-        duration_model = DurationGen2(len(id_to_ascii), len(dot_to_id), WINDOW_SIZE)
-        prepped_note_ids, prepped_dot_ids = prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches)
-        #duration2_train(duration_model, prepped_note_ids, prepped_dot_ids)
-    else:
-        duration_model = None
-
-    duration_gen_time = time.time()
-    print("Time elapsed for DurationGen training/testing = {} minutes".format((duration_gen_time - note_gen_time)/60))
-
-    initial_note_ascii = "Pdg"
-    generate_midi(note_model, id_to_ascii, reverse_dictionary(dot_to_id), ascii_to_pitch, initial_note_ascii, 10, duration_model)
-
-if __name__ == '__main__':
-    main()

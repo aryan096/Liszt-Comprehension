@@ -9,6 +9,8 @@ def positional_encoding(position, d_model):
   angle_rads = get_angles(np.arange(position)[:, np.newaxis],
                           np.arange(d_model)[np.newaxis, :],
                           d_model)
+  #print(position)
+  #print(d_model)
   
   # apply sin to even indices in the array; 2i
   sines = np.sin(angle_rads[:, 0::2])

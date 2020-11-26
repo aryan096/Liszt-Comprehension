@@ -1,7 +1,8 @@
 import tensorflow as tf
-from positionalencoding import positional_encoding
-from Attention import MultiHeadAttention
-from point_ffn import point_wise_feed_forward_network
+from Transformers.positionalencoding import positional_encoding
+from Transformers.Attention import MultiHeadAttention
+from Transformers.point_ffn import point_wise_feed_forward_network
+from processing.preprocess import WINDOW_SIZE
 
 class EncoderLayer(tf.keras.layers.Layer):
   def __init__(self, d_model, num_heads, dff, rate=0.1):
@@ -37,7 +38,7 @@ class Encoder(tf.keras.layers.Layer):
     self.num_layers = num_layers
     
     self.embedding = tf.keras.layers.Embedding(input_vocab_size, d_model)
-    self.pos_encoding = positional_encoding(input_vocab_size, self.d_model)
+    self.pos_encoding = positional_encoding(WINDOW_SIZE+2, self.d_model) #TODO input_vocab_size
     
     
     self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate) 
