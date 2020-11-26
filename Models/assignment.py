@@ -106,14 +106,14 @@ def main():
     # need note_gen_test_inputs and note_gen_test_labels (these are the same but shifted by 1)
     # need note_vocab
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
-        r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin", WINDOW_SIZE)
+        r"/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt-Comprehension/data/Liszt", WINDOW_SIZE)
 
     id_to_ascii = reverse_dictionary(ascii_to_id)
     ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
     # TODO - initialize NoteGen model
     note_model = create_note_gen_network(len(id_to_ascii))
     # TODO - train NoteGen model
-    #train_note_gen(note_model, note_id_inputs, note_id_labels)
+    train_note_gen(note_model, note_id_inputs, note_id_labels)
     # TODO - test NoteGen model - print perplexity
 
     note_gen_time = time.time()
@@ -123,15 +123,15 @@ def main():
     if sys.argv[1] == "NOTE_DURATION":
         duration_model = DurationGen2(len(id_to_ascii), len(dot_to_id), WINDOW_SIZE)
         prepped_note_ids, prepped_dot_ids = prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches)
-        #duration2_train(duration_model, prepped_note_ids, prepped_dot_ids)
+        duration2_train(duration_model, prepped_note_ids, prepped_dot_ids)
     else:
         duration_model = None
 
     duration_gen_time = time.time()
     print("Time elapsed for DurationGen training/testing = {} minutes".format((duration_gen_time - note_gen_time)/60))
 
-    initial_note_ascii = "Pdg"
-    generate_midi(note_model, id_to_ascii, reverse_dictionary(dot_to_id), ascii_to_pitch, initial_note_ascii, 10, duration_model)
+    initial_note_ascii = "$"
+    generate_midi(note_model, id_to_ascii, reverse_dictionary(dot_to_id), ascii_to_pitch, initial_note_ascii, 100, duration_model)
 
 if __name__ == '__main__':
     main()

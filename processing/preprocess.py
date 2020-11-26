@@ -271,11 +271,11 @@ def get_data(midi_folder, window_size: int):
 	corpus_duration_offset_batches = []
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder)[:2] # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder)[:10] # TODO - use this to only get some files if necessary
 
 	for elm in midi_files:
 		if re.match('.*\.mid[i]?', elm) is not None: #TODO - fix if wrong
-			m21_score = midi_to_m21(midi_folder + "\\" + elm)  # this returns the m21 score object
+			m21_score = midi_to_m21(midi_folder + "/" + elm)  # this returns the m21 score object
 			# this gets the list of notes/chords/rests, the list of durations, and the list of offsets
 			score, duration_offset_tuples = get_notes_and_durations(m21_score)
 			id_duration_offsets = duration_offset_idify(duration_offset_tuples, dot_to_id)
