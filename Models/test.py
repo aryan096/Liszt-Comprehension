@@ -3,6 +3,8 @@ import numpy as np
 
 from Models.note_gen_functional import *
 from processing.generate_midi import *
+from Models.duration_gen import *
+from Models.assignment import *
 
 
 def test_generate():
@@ -13,7 +15,7 @@ def test_generate():
 
     print(generate_notes(model, fake_id_to_ascii_dict, initial_note_ascii, 20))
 
-test_generate()
+#test_generate()
 
 def get_inputs_and_labels(data):
     inputs = [data[i][:-1] for i in range(len(data))]
@@ -34,19 +36,21 @@ def test_train():
     print(test_note_gen(model, fake_input, fake_labels))
     print("success!")
 
-def test_processing():
-
-
 #test_train()
 
 
+def test_duration_gen():
+    corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, duration_offset_dict, corpus_duration_offset_batches = get_data(
+        r'C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin', 250
+    )
+
+    model = DurationGen(len(ascii_to_id), len(duration_offset_dict), 250)
 
 
+    duration_train(model, corpus_note_id_batches, corpus_duration_offset_batches)
 
+    # perplexity, accuracy = duration_test(model, test_french, test_english, eng_padding_index)
+    # print("Model Perplexity = {}".format(perplexity))
+    # print("Model Accuracy = {}".format(accuracy))
 
-
-
-
-
-
-
+test_duration_gen()

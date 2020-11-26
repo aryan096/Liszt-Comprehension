@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras import Model
-import transformer_funcs as transformer
+import Models.transformer_funcs as transformer
 
 
 # from preprocess ...
@@ -38,18 +38,29 @@ class DurationGen(Model):
         # TODO - add more dense layers if necessary
         pass
 
-    def call(self, encoder_inputs, decoder_input):
+    def call(self, encoder_input, decoder_input):
         '''
         use Attention encoders and Attention decoders along with dense layers after.
 
-        :param encoder_inputs: batched IDs corresponding to notes
+        :param encoder_input: batched IDs corresponding to notes
         :param decoder_input: batched IDs corresponding to durations
         :return: The 3d probabilities as a tensor, [batch_size x piece_length x duration_vocab_size]
         '''
+        # 1) Add the positional embeddings to french sentence embeddings
+        notes_with_position = self.note_position(self.note_embedding(encoder_input))
+        # 2) Pass the french sentence embeddings to the encoder
+        encoder1_out = self.encoder1(notes_with_position)
+        # 3) Add positional embeddings to the english sentence embeddings
+        duration_with_position = self.duration_position(self.duration_embedding(decoder_input))
+        # 4) Pass the english embeddings and output of your encoder, to the decoder
+        decoder1_out = self.decoder1(duration_with_position, encoder1_out)
+        # 5) Apply dense layer(s) to the decoder out to generate probabilities
+        dense1_out = self.dense1(decoder1_out)
+        dense2_out = self.dense2(dense1_out)
 
-        pass
+        return dense2_out
 
-    def loss(self, prbs, labels, mask):
+    def loss_function(self, prbs, labels):
         '''
 
         :param prbs: (batch_size, piece_length, duration_vocab_size)
@@ -58,4 +69,4 @@ class DurationGen(Model):
         :return: reduce mean of sparse_categorical_loss
         '''
 
-        return tf.reduce_sum(tf.boolean_mask(tf.keras.losses.sparse_categorical_crossentropy(labels, prbs), mask))
+        return tf.reduce_sum(tf.keras.losses.sparse_categorical_crossentropy(labels, prbs))

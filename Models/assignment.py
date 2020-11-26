@@ -5,7 +5,7 @@ from processing.preprocess import *
 from processing.generate_midi import *
 
 
-def duration_train(model, train_notes, train_duration, duration_padding_index):
+def duration_train(model, train_notes, train_duration):
     """
     Runs through one epoch - all training examples.
 
@@ -15,10 +15,32 @@ def duration_train(model, train_notes, train_duration, duration_padding_index):
     :param duration_padding_index: the padding index, the id of *PAD* token. This integer is used when masking padding labels.
     :return: None
     """
-    pass
+    print("Begin Training")
+
+    num_trained = 0
+    while num_trained < len(train_notes):
+        notes_batch = train_notes[num_trained: num_trained + model.batch_size]
+        duration_batch = train_duration[num_trained: num_trained + model.batch_size]
+
+        with tf.GradientTape() as tape:
+            # remove last token from english sentences
+            #decoder_input = tf.convert_to_tensor([lst[:-1] for lst in duration_batch])
+            probabilities = model(notes_batch, duration_batch)
+            # remove first token from batch to create labels
+            #labels = tf.convert_to_tensor([lst[1:] for lst in duration_batch], dtype="int64")
+            #mask = np.where(labels == duration_padding_index, 0, 1)
+            loss = model.loss_function(probabilities, duration_batch)
+
+        num_trained += model.batch_size
+        if num_trained % (1 * model.batch_size) == 0:
+            print("     Loss on training after {} batches = {}".format(num_trained / (model.batch_size), loss))
+
+        gradients = tape.gradient(loss, model.trainable_variables)
+        model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
 
-def duration_test(model, train_notes, train_duration, duration_padding_index):
+
+def duration_test(model, test_notes, test_duration):
     """
     Runs through one epoch - all testing examples.
 
@@ -29,8 +51,34 @@ def duration_test(model, train_notes, train_duration, duration_padding_index):
     :returns: a tuple containing at index 0 the perplexity of the test set and at index 1 the per symbol accuracy on test set,
     e.g. (my_perplexity, my_accuracy)
     """
+    print("Begin Testing")
 
-    pass
+    total_words = 0
+    total_loss = 0
+    total_accuracy = 0
+    num_tested = 0
+    while num_tested < len(test_notes):
+        notes_batch = test_notes[num_tested: num_tested + model.batch_size]
+        duration_batch = test_duration[num_tested: num_tested + model.batch_size]
+
+        #decoder_input = tf.convert_to_tensor([lst[:-1] for lst in duration_batch])
+        probabilities = model(notes_batch, duration_batch)
+        # remove first token from batch to create labels
+        #labels = tf.convert_to_tensor([lst[1:] for lst in duration_batch], dtype="int64")
+        #mask = np.where(labels == duration_padding_index, 0, 1)
+        num_words_in_batch =  model.batch_size * model.piece_length #np.count_nonzero(mask == 1)
+        total_words += num_words_in_batch
+
+        batch_loss = model.loss_function(probabilities, duration_batch)
+        total_loss += batch_loss
+        batch_accuracy = num_words_in_batch * model.accuracy_function(probabilities, duration_batch)
+        total_accuracy += batch_accuracy
+
+        num_tested += model.batch_size
+        if num_tested % (1 * model.batch_size) == 0:
+            print("     Tested {} batches".format(num_tested / (model.batch_size)))
+
+    return np.exp(total_loss / total_words), total_accuracy / total_words
 
 
 def reverse_dictionary(dictionary: dict) -> dict:
@@ -57,7 +105,7 @@ def main():
     # need note_gen_test_inputs and note_gen_test_labels (these are the same but shifted by 1)
     # need note_vocab
     note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii = get_data(
-        r"C:\Users\dhruv\PycharmProjects\CSCI1470\Liszt_Comprehension\data\Scarlatti", 250)
+        r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin", 250)
 
     id_to_ascii = reverse_dictionary(ascii_to_id)
     ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
