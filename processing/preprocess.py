@@ -5,7 +5,14 @@ import tensorflow as tf
 import re
 import pickle
 # ToDo: (general)
+# 1. separate training and generation (along with saving/loading of weights)
 # 2. Find way to store data (ary)
+# 3. not choosing start/stop/pad ids (in duration)
+# 4. remove start stop pad tokens from pitch to ascii
+# 5. flattening data
+# 6. implement multi-head
+# 7. random file naming/write directly to Generated Pieces
+
 
 
 PAD_TOKEN = "**PAD**"
