@@ -33,8 +33,8 @@ def create_note_gen_network(note_vocab_size):
     return model
 
 
-def train_note_gen(model, input_data, labels):
-    model.fit(input_data, labels, epochs=5, batch_size=250)
+def train_note_gen(model, input_data, labels, num_epocs):
+    model.fit(input_data, labels, epochs=num_epocs, batch_size=250)
 
 
 def test_note_gen(model, input_data, labels):

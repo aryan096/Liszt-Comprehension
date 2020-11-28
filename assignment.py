@@ -30,14 +30,14 @@ def main():
     # need note_gen_test_inputs and note_gen_test_labels (these are the same but shifted by 1)
     # need note_vocab
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
-        r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin", WINDOW_SIZE)
+        "./data/Chopin", WINDOW_SIZE)
 
     id_to_ascii = reverse_dictionary(ascii_to_id)
     ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
     # TODO - initialize NoteGen model
     note_model = create_note_gen_network(len(ascii_to_id))
     # TODO - train NoteGen model
-    train_note_gen(note_model, note_id_inputs, note_id_labels)
+    train_note_gen(note_model, note_id_inputs, note_id_labels, 10)
     # TODO - test NoteGen model - print perplexity
 
     note_gen_time = time.time()
@@ -56,6 +56,9 @@ def main():
 
     initial_note_ascii = "$"
     generate_midi(note_model, ascii_to_id, reverse_dictionary(dot_to_id), ascii_to_pitch, initial_note_ascii, 100, duration_model)
+    note_model.save_weights('./checkpoints/notes_model_checkpoint')
+    duration_model.save_weights('./checkpoints/duration_model_checkpoint')
+
 
 if __name__ == '__main__':
     main()

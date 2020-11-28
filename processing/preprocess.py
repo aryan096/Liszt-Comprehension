@@ -272,7 +272,7 @@ def get_data(midi_folder, window_size: int):
 	corpus_duration_offset_batches = []
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder)[:10] # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder)[:20] # TODO - use this to only get some files if necessary
 
 	for elm in midi_files:
 		if re.match('.*\.mid[i]?', elm) is not None: #TODO - fix if wrong
