@@ -10,6 +10,7 @@ import pickle
 
 PAD_TOKEN = "**PAD**"
 PAD_ASCII = chr(35)
+PAD_ID = 2
 STOP_TOKEN = "**STOP**"
 STOP_ASCII = chr(34)
 STOP_ID = 1
@@ -256,7 +257,7 @@ def get_data(midi_folder, window_size: int):
 	# initialize the dicts
 	pitch_to_ascii = {}
 	ascii_to_id = {}
-	dot_to_id = {START_TOKEN: START_ID, STOP_TOKEN: STOP_ID}
+	dot_to_id = {START_TOKEN: START_ID, STOP_TOKEN: STOP_ID, PAD_TOKEN: PAD_ID}
 
 	# read the dicts stored in the binary file
 	#_, _, pitch_to_ascii, ascii_to_id, duration_offset_dict = read_dicts_from_file()

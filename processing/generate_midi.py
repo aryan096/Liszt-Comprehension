@@ -1,22 +1,22 @@
 from music21 import *
 import numpy as np
 import tensorflow as tf
-from processing.preprocess import REST_ASCII, START_ID, STOP_ID, START_TOKEN
+from processing.preprocess import REST_ASCII, START_ID, STOP_ID, START_TOKEN, WINDOW_SIZE, PAD_ID
 
 
-def generate_notes(model, id_to_ascii_dict: dict, initial_note_ascii: str, length: int) -> list:
+def generate_notes(model, ascii_to_id_dict: dict, initial_note_ascii: str, length: int) -> list:
 	"""
 	Generates a piece of notes given a starting note
 	:param model: trained model
-	:param id_to_ascii_dict: a dictionary mapping integer ids to ASCII ids
+	:param ascii_to_id_dict: a dictionary mapping ASCIIs to integer ids
 	:param initial_note_ascii: an initial note as an ASCII character
 	:param length: desired piece length
 	:return: a generated piece of ASCII characters
 	"""
 	sample_n = 10  # The top sample_n chords are chosen from randomly when generating the next chord of the piece
-	reverse_dictionary = {ascii: id for id, ascii in id_to_ascii_dict.items()}
+	reverse_dictionary = {id: ascii for ascii, id in ascii_to_id_dict.items()}
 
-	first_note_id = reverse_dictionary[initial_note_ascii]
+	first_note_id = ascii_to_id_dict[initial_note_ascii]
 	next_input = [[first_note_id]]
 	ascii_piece = [initial_note_ascii]
 
@@ -28,7 +28,7 @@ def generate_notes(model, id_to_ascii_dict: dict, initial_note_ascii: str, lengt
 		top_probs = np.exp(probs[top_note_ids]) / sum(np.exp(probs[top_note_ids]))
 		next_chord_id = np.random.choice(top_note_ids, p=top_probs)
 
-		ascii_piece.append(id_to_ascii_dict[next_chord_id])
+		ascii_piece.append(reverse_dictionary[next_chord_id])
 		next_input[0].append(next_chord_id)
 	return ascii_piece, next_input
 
@@ -45,20 +45,27 @@ def generate_durations_and_offsets(model, piece):
 	sample_n = 10  # The top sample_n chords are chosen from randomly when generating the next chord of the piece
 
 	first_dot_id = START_ID
-	encoder_input = [[START_ID] + piece + [STOP_ID]]
-	print(encoder_input)
-	next_input = [[first_dot_id]]
+	current_piece_len = len(piece)
+	n_pad_tokens = WINDOW_SIZE - current_piece_len
+	encoder_input = [[START_ID] + piece + [PAD_ID] * n_pad_tokens +  [STOP_ID]]
+	#print(encoder_input)
+	#print(len(encoder_input[0]))
+	next_input = [first_dot_id]
 
-	for i in range(len(piece)):
-		probs = model.call(tf.convert_to_tensor(encoder_input), tf.convert_to_tensor(next_input))
+	for i in range(current_piece_len):
+		next_input_current_len = len(next_input)
+		n_decoder_pad_tokens = WINDOW_SIZE - next_input_current_len
+		decoder_input = [next_input + [PAD_ID] * (n_decoder_pad_tokens+1) + [STOP_ID]]
+
+		probs = model.call(tf.convert_to_tensor(encoder_input), tf.convert_to_tensor(decoder_input))
 		probs = np.array(probs[0, -1, :])  # output of model is 3D
 
 		top_note_ids = np.argsort(probs)[-sample_n:]
 		top_probs = np.exp(probs[top_note_ids]) / sum(np.exp(probs[top_note_ids]))
 		next_dot_id = np.random.choice(top_note_ids, p=top_probs)
 
-		next_input[0].append(next_dot_id)
-	return next_input
+		next_input.append(next_dot_id)
+	return [next_input]
 
 def reverse_dictionary(dictionary: dict) -> dict:
 	"""
@@ -126,7 +133,7 @@ def ascii_to_m21(ascii_notes: list, ascii_to_m21_dict: dict, durations_and_offse
 			piece.append(note.Note(ascii_to_m21_dict[chord_string]))
 
 	if durations_and_offsets:
-		print(ascii_notes, durations_and_offsets)
+		#print(ascii_notes, durations_and_offsets)
 		if durations_and_offsets[0] == START_TOKEN:
 			durations_and_offsets = durations_and_offsets[1:]
 		if START_ID in durations_and_offsets:
@@ -141,13 +148,13 @@ def ascii_to_m21(ascii_notes: list, ascii_to_m21_dict: dict, durations_and_offse
 	return piece
 
 
-def generate_midi(note_model, id_ascii_dict: dict, id_duration_offset_dict: dict, ascii_m21_dict: dict,
+def generate_midi(note_model, ascii_id_dict: dict, id_duration_offset_dict: dict, ascii_m21_dict: dict,
                   initial_note_ascii: str, length: int, duration_model=None) -> None:
 	"""
 	Does the complete postprocessing using above-defined helper functions and saves a file called "first_ever_piece.midi"
 	to the current directory
 	:param note_model: model that generates notes
-	:param id_ascii_dict: dictionary mapping ids to ASCII
+	:param ascii_id_dict: dictionary mapping ASCII to ids
 	:param id_duration_offset_dict: dictionary mapping ids to (duration, offset) tuples
 	:param ascii_m21_dict: dictionary mapping ASCII to music21 objects
 	:param initial_note_ascii: an initial note as an ASCII character
@@ -155,10 +162,10 @@ def generate_midi(note_model, id_ascii_dict: dict, id_duration_offset_dict: dict
 	:param duration_model: model that generates durations
 	:return: None
 	"""
-	composed_piece, composed_id_piece = generate_notes(note_model, id_ascii_dict, initial_note_ascii, length)
+	composed_piece, composed_id_piece = generate_notes(note_model, ascii_id_dict, initial_note_ascii, length)
 	#print(id_ascii_dict)
 	#print(composed_piece)
-	print(composed_id_piece)
+	#print(composed_id_piece)
 
 	if duration_model:
 		id_durations_and_offsets = generate_durations_and_offsets(duration_model, composed_id_piece[0])
