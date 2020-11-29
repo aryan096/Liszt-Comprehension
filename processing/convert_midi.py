@@ -36,14 +36,14 @@ def move_one_trackers(midi_folder, target_folder):
     composer_folders = os.listdir(midi_folder)
 
     for composer in composer_folders:
-        midi_files = os.listdir(midi_folder + '\\' + composer)
+        midi_files = os.listdir(midi_folder + '/' + composer)
         counter = 0
         for elm in midi_files:
-            piece = midi_to_m21(midi_folder + '\\' + composer + '\\' + elm)
+            piece = midi_to_m21(midi_folder + '/' + composer + '/' + elm)
             if len(piece.elements) == 1:
                 print("yes")
                 counter += 1
-                shutil.copy2(midi_folder + '\\' + composer + '\\' + elm, target_folder + '\\' + composer + '\\' + elm)
+                shutil.copy2(midi_folder + '/' + composer + '/' + elm, target_folder + '/' + composer + '/' + elm)
         print(composer + ": {}".format(counter))
 
 move_one_trackers(r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data",
