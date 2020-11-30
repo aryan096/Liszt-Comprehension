@@ -2,6 +2,7 @@ import mido
 import os
 import music21
 import shutil
+import re
 
 def convert(midi_folder, out_folder):
     midi_files = os.listdir(midi_folder)[:1]
@@ -36,18 +37,20 @@ def move_one_trackers(midi_folder, target_folder):
     composer_folders = os.listdir(midi_folder)
 
     for composer in composer_folders:
-        midi_files = os.listdir(midi_folder + '/' + composer)
-        counter = 0
-        for elm in midi_files:
-            piece = midi_to_m21(midi_folder + '/' + composer + '/' + elm)
-            if len(piece.elements) == 1:
-                print("yes")
-                counter += 1
-                shutil.copy2(midi_folder + '/' + composer + '/' + elm, target_folder + '/' + composer + '/' + elm)
-        print(composer + ": {}".format(counter))
+        if composer == "Scarlatti":
+            midi_files = os.listdir(midi_folder + '/' + composer)
+            counter = 0
+            for elm in midi_files:
+                if re.match('.*\.mid[i]?', elm) is not None:  # TODO - fix if wrong
+                    piece = midi_to_m21(midi_folder + '/' + composer + '/' + elm)
+                    if len(piece.elements) == 1:
+                        print("yes")
+                        counter += 1
+                        shutil.copy2(midi_folder + '/' + composer + '/' + elm, target_folder + '/' + composer + '/' + elm)
+            print(composer + ": {}".format(counter))
 
-move_one_trackers(r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data",
-                  r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\OneTrackData")
+move_one_trackers(r"/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt-Comprehension/data",
+                  r"/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt-Comprehension/OneTrackData")
 
 
 def move_one_trackers_mido(midi_folder, target_folder):
