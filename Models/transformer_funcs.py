@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import numpy as np
+from collections import defaultdict as ddict
 
 def Attention_Matrix(K, Q, use_mask=False):
     """
@@ -89,14 +90,62 @@ class Atten_Head(tf.keras.layers.Layer):
 
 
 class Multi_Headed(tf.keras.layers.Layer):
-    def __init__(self, emb_sz, use_mask):
+    # Untested, but I think this is the general architecture?
+    def __init__(self, emb_sz, output_size, use_mask, num_layers):
         super(Multi_Headed, self).__init__()
 
     # TODO:
     # Initialize heads
+        self.emb_sz = emb_sz
+        self.out_size = output_size
+        self.num_layers = num_layers
+        self.heads = ddict(dict)
+        for i in range(num_layers):
+            self.heads[i] = Atten_Head(int(emb_sz/num_layers), int(emb_sz/num_layers), use_mask)
+        #self.head1 = Atten_Head(int(emb_sz/3), int(emb_sz/3), use_mask)
+        #self.head2 = Atten_Head(int(emb_sz/3), int(emb_sz/3), use_mask)
+        #self.head3 = Atten_Head(int(emb_sz/3), int(emb_sz/3), use_mask)
+        self.linear = tf.keras.layers.Dense(self.out_size)
+        
 
     @tf.function
     def call(self, inputs_for_keys, inputs_for_values, inputs_for_queries):
+        keys = ddict(dict)
+        vals = ddict(dict)
+        qs = ddict(dict)
+        for i in range((self.num_layers)):
+            if(i==self.num_layers):
+                keys[i] = inputs_for_keys[(int(self.emb_sz/self.num_layers)*i):]
+                vals[i] = inputs_for_values[(int(self.emb_sz/self.num_layers)*i):]
+                qs[i] = inputs_for_queries[(int(self.emb_sz/self.num_layers)*i):]
+            else:
+                keys[i] = inputs_for_keys[(int(self.emb_sz/self.num_layers)*i):(int(self.emb_sz/self.num_layers)*(i+1))]
+                vals[i] = inputs_for_values[(int(self.emb_sz/self.num_layers)*i):(int(self.emb_sz/self.num_layers)*(i+1))]
+                qs[i] = inputs_for_queries[(int(self.emb_sz/self.num_layers)*i):(int(self.emb_sz/self.num_layers)*(i+1))]
+        """  
+        key_in_1 = inputs_for_keys[:int(self.emb_sz/3)]
+        key_in_2 = inputs_for_keys[int(self.emb_sz/3):(2*int(self.emb_sz/3))]
+        key_in_3 = inputs_for_keys[(2*int(self.emb_sz/3)):]
+        
+        val_in_1 = inputs_for_values[:int(self.emb_sz/3)]
+        val_in_2 = inputs_for_values[int(self.emb_sz/3):(2*int(self.emb_sz/3))]
+        val_in_3 = inputs_for_values[(2*int(self.emb_sz/3)):]
+        
+        q_in_1 = inputs_for_queries[:int(self.emb_sz/3)]
+        q_in_2 = inputs_for_queries[int(self.emb_sz/3):(2*int(self.emb_sz/3))]
+        q_in_3 = inputs_for_queries[(2*int(self.emb_sz/3)):]
+        
+        mult1 = self.head1(key_in_1,val_in_1,q_in_1)
+        mult2 = self.head1(key_in_2,val_in_2,q_in_2)
+        mult3 = self.head1(key_in_3,val_in_3,q_in_3)
+        """
+        multi_full = []
+        for i in range(self.num_layers):
+            multi_full.append(self.heads[i](keys[i],vals[i],qs[i]))
+        multi_full = tf.concat([multi_full],0)
+        out = self.linear(multi_full)
+        
+        
         """
         FOR CS2470 STUDENTS:
 
@@ -114,7 +163,7 @@ class Multi_Headed(tf.keras.layers.Layer):
         :return: tensor of [BATCH_SIZE x (ENG/FRN)_WINDOW_SIZE x output_size ]
         """
 
-        return None
+        return out
 
 
 class Feed_Forwards(tf.keras.layers.Layer):
