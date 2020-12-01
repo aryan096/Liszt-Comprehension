@@ -3,6 +3,7 @@ import numpy as np
 from tensorflow.keras import Model
 from keras.layers import Dense, Dropout, GRU, Activation, Bidirectional, Flatten
 from keras_multi_head import MultiHeadAttention
+from .transformer_funcs import Multi_Headed
 # from preprocess ...
 
 
@@ -15,6 +16,8 @@ def create_note_gen_network(note_vocab_size):
 
     model.add(Bidirectional(GRU(100, return_sequences=True)))
     model.add(MultiHeadAttention(head_num=4))
+    #Let's hope this works!
+    #model.add(Multi_Headed(embedding_size,embedding_size,False,4))
     model.add(Dropout(0.3))
 
     model.add(Bidirectional(GRU(100, return_sequences=True)))

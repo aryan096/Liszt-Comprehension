@@ -91,7 +91,7 @@ class Atten_Head(tf.keras.layers.Layer):
 
 class Multi_Headed(tf.keras.layers.Layer):
     # Untested, but I think this is the general architecture?
-    def __init__(self, emb_sz, output_size, use_mask, num_layers):
+    def __init__(self, emb_sz, output_size,num_layers, use_mask):
         super(Multi_Headed, self).__init__()
 
     # TODO:
@@ -100,6 +100,8 @@ class Multi_Headed(tf.keras.layers.Layer):
         self.out_size = output_size
         self.num_layers = num_layers
         self.heads = ddict(dict)
+        
+        #print("size = ", int(emb_sz/num_layers))
         for i in range(num_layers):
             self.heads[i] = Atten_Head(int(emb_sz/num_layers), int(emb_sz/num_layers), use_mask)
         #self.head1 = Atten_Head(int(emb_sz/3), int(emb_sz/3), use_mask)
@@ -109,19 +111,25 @@ class Multi_Headed(tf.keras.layers.Layer):
         
 
     @tf.function
-    def call(self, inputs_for_keys, inputs_for_values, inputs_for_queries):
+    def call(self, inputs_for_keys, inputs_for_values = None, inputs_for_queries = None):
+        #print(inputs_for_keys)
+        if((inputs_for_values==None)&(inputs_for_queries==None)):
+            inputs_for_values = inputs_for_keys
+            inputs_for_queries = inputs_for_keys
         keys = ddict(dict)
         vals = ddict(dict)
         qs = ddict(dict)
         for i in range((self.num_layers)):
             if(i==self.num_layers):
-                keys[i] = inputs_for_keys[(int(self.emb_sz/self.num_layers)*i):]
-                vals[i] = inputs_for_values[(int(self.emb_sz/self.num_layers)*i):]
-                qs[i] = inputs_for_queries[(int(self.emb_sz/self.num_layers)*i):]
+                keys[i] = inputs_for_keys[:,:,(int(self.emb_sz/self.num_layers)*i):]
+                #print("Keys: ", keys[i])
+                vals[i] = inputs_for_values[:,:,(int(self.emb_sz/self.num_layers)*i):]
+                qs[i] = inputs_for_queries[:,:,(int(self.emb_sz/self.num_layers)*i):]
             else:
-                keys[i] = inputs_for_keys[(int(self.emb_sz/self.num_layers)*i):(int(self.emb_sz/self.num_layers)*(i+1))]
-                vals[i] = inputs_for_values[(int(self.emb_sz/self.num_layers)*i):(int(self.emb_sz/self.num_layers)*(i+1))]
-                qs[i] = inputs_for_queries[(int(self.emb_sz/self.num_layers)*i):(int(self.emb_sz/self.num_layers)*(i+1))]
+                keys[i] = inputs_for_keys[:,:,(int(self.emb_sz/self.num_layers)*i):(int(self.emb_sz/self.num_layers)*(i+1))]
+                #print("Keys: ", keys[i])
+                vals[i] = inputs_for_values[:,:,(int(self.emb_sz/self.num_layers)*i):(int(self.emb_sz/self.num_layers)*(i+1))]
+                qs[i] = inputs_for_queries[:,:,(int(self.emb_sz/self.num_layers)*i):(int(self.emb_sz/self.num_layers)*(i+1))]
         """  
         key_in_1 = inputs_for_keys[:int(self.emb_sz/3)]
         key_in_2 = inputs_for_keys[int(self.emb_sz/3):(2*int(self.emb_sz/3))]
@@ -141,8 +149,10 @@ class Multi_Headed(tf.keras.layers.Layer):
         """
         multi_full = []
         for i in range(self.num_layers):
+            #print('multi', i, ' done')
             multi_full.append(self.heads[i](keys[i],vals[i],qs[i]))
-        multi_full = tf.concat([multi_full],0)
+        multi_full = tf.concat(multi_full,-1)
+        print("Multi shape: ", multi_full)
         out = self.linear(multi_full)
         
         
@@ -191,16 +201,14 @@ class Feed_Forwards(tf.keras.layers.Layer):
 
 
 class Transformer_Block(tf.keras.layers.Layer):
-    def __init__(self, emb_sz, is_decoder, multi_headed=False):
+    def __init__(self, emb_sz, is_decoder, multi_headed=True):
         super(Transformer_Block, self).__init__()
 
         self.ff_layer = Feed_Forwards(emb_sz)
-        self.self_atten = Atten_Head(emb_sz, emb_sz, use_mask=is_decoder) if not multi_headed else Multi_Headed(emb_sz,
-                                                                                                                use_mask=is_decoder)
+        self.self_atten = Atten_Head(emb_sz, emb_sz, use_mask=is_decoder) if not multi_headed else Multi_Headed(emb_sz,emb_sz,5,use_mask=is_decoder)
         self.is_decoder = is_decoder
         if self.is_decoder:
-            self.self_context_atten = Atten_Head(emb_sz, emb_sz, use_mask=False) if not multi_headed else Multi_Headed(
-                emb_sz, use_mask=False)
+            self.self_context_atten = Atten_Head(emb_sz, emb_sz, use_mask=False) if not multi_headed else Multi_Headed(emb_sz,emb_sz,5,use_mask=is_decoder)
 
         self.layer_norm = tf.keras.layers.LayerNormalization(axis=-1)
 
@@ -238,6 +246,7 @@ class Transformer_Block(tf.keras.layers.Layer):
 
         if self.is_decoder:
             assert context is not None, "Decoder blocks require context"
+            print("CONTEXT: ",context)
             context_atten_out = self.self_context_atten(context, context, atten_normalized)
             context_atten_out += atten_normalized
             atten_normalized = self.layer_norm(context_atten_out)

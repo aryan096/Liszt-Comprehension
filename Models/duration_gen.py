@@ -29,9 +29,9 @@ class DurationGen(Model):
         self.duration_position = transformer.Position_Encoding_Layer(self.piece_length, self.embedding_size)
 
         # TODO - add more encoders if necessary
-        self.encoder1 = transformer.Transformer_Block(self.embedding_size, is_decoder=False, multi_headed=False)
+        self.encoder1 = transformer.Transformer_Block(self.embedding_size, is_decoder=False, multi_headed=True)
         # TODO - add more decoders if necessary
-        self.decoder1 = transformer.Transformer_Block(self.embedding_size, is_decoder=True, multi_headed=False)
+        self.decoder1 = transformer.Transformer_Block(self.embedding_size, is_decoder=True, multi_headed=True)
 
         self.dense1 = tf.keras.layers.Dense(300, activation='relu') # TODO - change as required
         self.dense2 = tf.keras.layers.Dense(self.duration_vocab_size, activation='softmax') # TODO - change as required
@@ -45,6 +45,8 @@ class DurationGen(Model):
         :param decoder_input: batched IDs corresponding to durations
         :return: The 3d probabilities as a tensor, [batch_size x piece_length x duration_vocab_size]
         '''
+        #print("encoder: ", tf.shape(encoder_input))
+        #print("decoder: ", tf.shape(decoder_input))
         # 1) Add the positional embeddings to french sentence embeddings
         notes_with_position = self.note_position(self.note_embedding(encoder_input))
         # 2) Pass the french sentence embeddings to the encoder
@@ -52,6 +54,7 @@ class DurationGen(Model):
         # 3) Add positional embeddings to the english sentence embeddings
         duration_with_position = self.duration_position(self.duration_embedding(decoder_input))
         # 4) Pass the english embeddings and output of your encoder, to the decoder
+        #print("This is fine ",duration_with_position)
         decoder1_out = self.decoder1(duration_with_position, encoder1_out)
         # 5) Apply dense layer(s) to the decoder out to generate probabilities
         dense1_out = self.dense1(decoder1_out)

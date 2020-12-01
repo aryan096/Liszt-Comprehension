@@ -37,7 +37,7 @@ def main():
     # TODO - initialize NoteGen model
     note_model = create_note_gen_network(len(ascii_to_id))
     # TODO - train NoteGen model
-    train_note_gen(note_model, note_id_inputs, note_id_labels, 10)
+    train_note_gen(note_model, note_id_inputs, note_id_labels, 5)
     # TODO - test NoteGen model - print perplexity
 
     note_gen_time = time.time()
@@ -56,8 +56,8 @@ def main():
 
     initial_note_ascii = "$"
     generate_midi(note_model, ascii_to_id, reverse_dictionary(dot_to_id), ascii_to_pitch, initial_note_ascii, 100, duration_model)
-    note_model.save_weights('./checkpoints/notes_model_checkpoint')
-    duration_model.save_weights('./checkpoints/duration_model_checkpoint')
+    #note_model.save_weights('./checkpoints/notes_model_checkpoint')
+    #duration_model.save_weights('./checkpoints/duration_model_checkpoint')
 
 
 if __name__ == '__main__':
