@@ -1,6 +1,9 @@
 from music21 import *
 import numpy as np
 import tensorflow as tf
+import shutil
+import os
+import datetime
 from processing.preprocess import REST_ASCII, START_ID, STOP_ID, START_TOKEN, WINDOW_SIZE, PAD_ID
 
 
@@ -13,7 +16,7 @@ def generate_notes(model, ascii_to_id_dict: dict, initial_note_ascii: str, lengt
 	:param length: desired piece length
 	:return: a generated piece of ASCII characters
 	"""
-	sample_n = 10  # The top sample_n chords are chosen from randomly when generating the next chord of the piece
+	sample_n = 5  # The top sample_n chords are chosen from randomly when generating the next chord of the piece
 	reverse_dictionary = {id: ascii for ascii, id in ascii_to_id_dict.items()}
 
 	first_note_id = ascii_to_id_dict[initial_note_ascii]
@@ -42,7 +45,7 @@ def generate_durations_and_offsets(model, piece):
 	"""
 	# ToDo:
 	# Implement generate durations
-	sample_n = 10  # The top sample_n chords are chosen from randomly when generating the next chord of the piece
+	sample_n = 5  # The top sample_n chords are chosen from randomly when generating the next chord of the piece
 
 	first_dot_id = START_ID
 	current_piece_len = len(piece)
@@ -60,7 +63,14 @@ def generate_durations_and_offsets(model, piece):
 		probs = model.call(tf.convert_to_tensor(encoder_input), tf.convert_to_tensor(decoder_input))
 		probs = np.array(probs[0, -1, :])  # output of model is 3D
 
-		top_note_ids = np.argsort(probs)[-sample_n:]
+		top_note_ids = list(np.argsort(probs)[-sample_n:])#.remove(STOP_ID).remove(START_ID).remove(PAD_ID)
+
+		ids_to_remove = [START_ID, STOP_ID, PAD_ID]
+		for id in ids_to_remove:
+			if id in top_note_ids:
+				top_note_ids.remove(id)
+
+		#print(top_note_ids)
 		top_probs = np.exp(probs[top_note_ids]) / sum(np.exp(probs[top_note_ids]))
 		next_dot_id = np.random.choice(top_note_ids, p=top_probs)
 
@@ -176,7 +186,14 @@ def generate_midi(note_model, ascii_id_dict: dict, id_duration_offset_dict: dict
 	piece = ascii_to_m21(composed_piece, ascii_m21_dict, durations_and_offsets)
 
 	# Saves a midi file containing the generated piece called first_ever_piece.midi to the current directory
-	piece.write("midi", "first_ever_durationed_piece.midi")
+	current_directory = os.getcwd()
+	#print(current_directory)
+	separator = "\\" if os.name == 'nt' else '/'
+	target_directory = current_directory + separator + "Generated Pieces"
+	file_name = str(datetime.datetime.now())[:16].replace(":", "_") + ".midi"
+
+	piece.write("midi", file_name)
+	shutil.move(current_directory + separator + file_name, target_directory + separator + file_name)
 
 	# Opens a MusicXML reader and shows the sheet music for the generated piece
 	#piece.show()  # only works if MusicXML reader like MuseScore, Finale, or Sibelius is installed

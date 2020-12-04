@@ -37,7 +37,7 @@ def main():
     # TODO - initialize NoteGen model
     note_model = create_note_gen_network(len(ascii_to_id))
     # TODO - train NoteGen model
-    train_note_gen(note_model, note_id_inputs, note_id_labels, 5)
+    #train_note_gen(note_model, note_id_inputs, note_id_labels, 1)
     # TODO - test NoteGen model - print perplexity
 
     note_gen_time = time.time()
@@ -47,7 +47,7 @@ def main():
     if sys.argv[1] == "NOTE_DURATION":
         duration_model = DurationGen(len(ascii_to_id), len(dot_to_id), WINDOW_SIZE+2)
         prepped_note_ids, prepped_dot_ids = prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches)
-        duration_train(duration_model, prepped_note_ids, prepped_dot_ids)
+        #duration_train(duration_model, prepped_note_ids, prepped_dot_ids)
     else:
         duration_model = None
 

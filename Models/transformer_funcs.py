@@ -91,7 +91,7 @@ class Atten_Head(tf.keras.layers.Layer):
 
 class Multi_Headed(tf.keras.layers.Layer):
     # Untested, but I think this is the general architecture?
-    def __init__(self, emb_sz, output_size,num_layers, use_mask):
+    def __init__(self, emb_sz, output_size, num_layers, use_mask):
         super(Multi_Headed, self).__init__()
 
     # TODO:
@@ -112,6 +112,22 @@ class Multi_Headed(tf.keras.layers.Layer):
 
     @tf.function
     def call(self, inputs_for_keys, inputs_for_values = None, inputs_for_queries = None):
+        """
+                FOR CS2470 STUDENTS:
+
+                This functions runs a multiheaded attention layer.
+
+                Requirements:
+                    - Splits data for 3 different heads of size embed_sz/3
+                    - Create three different attention heads
+                    - Concatenate the outputs of these heads together
+                    - Apply a linear layer
+
+                :param inputs_for_keys: tensor of [batch_size x [ENG/FRN]_WINDOW_SIZE x input_size ]
+                :param inputs_for_values: tensor of [batch_size x [ENG/FRN]_WINDOW_SIZE x input_size ]
+                :param inputs_for_queries: tensor of [batch_size x [ENG/FRN]_WINDOW_SIZE x input_size ]
+                :return: tensor of [BATCH_SIZE x (ENG/FRN)_WINDOW_SIZE x output_size ]
+                """
         #print(inputs_for_keys)
         if((inputs_for_values==None)&(inputs_for_queries==None)):
             inputs_for_values = inputs_for_keys
@@ -151,27 +167,10 @@ class Multi_Headed(tf.keras.layers.Layer):
         for i in range(self.num_layers):
             #print('multi', i, ' done')
             multi_full.append(self.heads[i](keys[i],vals[i],qs[i]))
+        #print("Multi shape: ", len(multi_full))
         multi_full = tf.concat(multi_full,-1)
-        print("Multi shape: ", multi_full)
+        #print("Multi shape: ", multi_full)
         out = self.linear(multi_full)
-        
-        
-        """
-        FOR CS2470 STUDENTS:
-
-        This functions runs a multiheaded attention layer.
-
-        Requirements:
-            - Splits data for 3 different heads of size embed_sz/3
-            - Create three different attention heads
-            - Concatenate the outputs of these heads together
-            - Apply a linear layer
-
-        :param inputs_for_keys: tensor of [batch_size x [ENG/FRN]_WINDOW_SIZE x input_size ]
-        :param inputs_for_values: tensor of [batch_size x [ENG/FRN]_WINDOW_SIZE x input_size ]
-        :param inputs_for_queries: tensor of [batch_size x [ENG/FRN]_WINDOW_SIZE x input_size ]
-        :return: tensor of [BATCH_SIZE x (ENG/FRN)_WINDOW_SIZE x output_size ]
-        """
 
         return out
 
@@ -246,7 +245,7 @@ class Transformer_Block(tf.keras.layers.Layer):
 
         if self.is_decoder:
             assert context is not None, "Decoder blocks require context"
-            print("CONTEXT: ",context)
+            #print("CONTEXT: ",context)
             context_atten_out = self.self_context_atten(context, context, atten_normalized)
             context_atten_out += atten_normalized
             atten_normalized = self.layer_norm(context_atten_out)

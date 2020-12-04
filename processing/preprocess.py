@@ -7,25 +7,26 @@ import pickle
 # ToDo: (general)
 # 1. separate training and generation (along with saving/loading of weights)
 # 2. Find way to store data (ary)
-# 3. not choosing start/stop/pad ids (in duration)
-# 4. remove start stop pad tokens from pitch to ascii
+# 3. not choosing start/stop/pad ids (in duration) #TODO-NE
+# 4. remove start stop pad tokens from pitch to ascii #TODO-NE
 # 5. flattening data
-# 6. implement multi-head
-# 7. random file naming/write directly to Generated Pieces
+# 6. implement multi-head #TODO-NE (sorta)
+# 7. random file naming/write directly to Generated Pieces #TODO-NE
+# 8. Figure out GCP
 
 
 
 PAD_TOKEN = "**PAD**"
-PAD_ASCII = chr(35)
+# PAD_ASCII = chr(35)
 PAD_ID = 2
 STOP_TOKEN = "**STOP**"
-STOP_ASCII = chr(34)
+# STOP_ASCII = chr(34)
 STOP_ID = 1
 START_TOKEN = "**START**"
-START_ASCII = chr(33)
+# START_ASCII = chr(33) #TODO if used, change to not 33
 START_ID = 0
 REST_TOKEN = "rest"
-REST_ASCII = chr(36)
+REST_ASCII = chr(33)
 WINDOW_SIZE = 250
 
 
@@ -270,20 +271,21 @@ def get_data(midi_folder, window_size: int):
 	#_, _, pitch_to_ascii, ascii_to_id, duration_offset_dict = read_dicts_from_file()
 
 	# add the necessary token stuff to the dict (although it is probably in it anyway)
-	pitch_to_ascii[START_TOKEN] = chr(33)
-	pitch_to_ascii[STOP_TOKEN] = chr(34)
-	pitch_to_ascii[PAD_TOKEN] = chr(35)
-	pitch_to_ascii[REST_TOKEN] = chr(36)
+	# pitch_to_ascii[START_TOKEN] = chr(33)
+	# pitch_to_ascii[STOP_TOKEN] = chr(34)
+	# pitch_to_ascii[PAD_TOKEN] = chr(35)
+	pitch_to_ascii[REST_TOKEN] = REST_ASCII
 
 	corpus_note_id_batches = []
 	corpus_duration_offset_batches = []
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder)[:20] # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder)[:1] # TODO - use this to only get some files if necessary
+	separator = "\\" if os.name == 'nt' else '/'
 
 	for elm in midi_files:
 		if re.match('.*\.mid[i]?', elm) is not None: #TODO - fix if wrong
-			m21_score = midi_to_m21(midi_folder + "/" + elm)  # this returns the m21 score object
+			m21_score = midi_to_m21(midi_folder + separator + elm)  # this returns the m21 score object
 			# this gets the list of notes/chords/rests, the list of durations, and the list of offsets
 			score, duration_offset_tuples = get_notes_and_durations(m21_score)
 			id_duration_offsets = duration_offset_idify(duration_offset_tuples, dot_to_id)
