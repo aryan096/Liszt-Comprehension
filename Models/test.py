@@ -1,10 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from Models.note_gen_functional import *
-from processing.generate_midi import *
-from Models.duration_gen import *
-from Models.assignment import *
+from assignment import *
 from Models.duration_gen2 import *
 
 

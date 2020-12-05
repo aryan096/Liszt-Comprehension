@@ -4,6 +4,8 @@ from tensorflow.keras import Model
 from Transformers.Attention import MultiHeadAttention
 # from preprocess ...
 
+# DEPRECATED?
+
 class NoteGen(Model):
     def __init__(self, note_vocab_size, piece_length):
         '''initialize hyperparams, layers, optimizers'''

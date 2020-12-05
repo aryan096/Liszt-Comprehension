@@ -7,6 +7,15 @@ import datetime
 from processing.preprocess import REST_ASCII, START_ID, STOP_ID, START_TOKEN, WINDOW_SIZE, PAD_ID
 
 
+def reverse_dictionary(dictionary: dict) -> dict:
+	"""
+	Reverses a bijective dictionary
+	:param dictionary: a bijective dictionary
+	:return: the input dictionary with keys ad values reversed
+	"""
+	return {value: key for key, value in dictionary.items()}
+
+
 def generate_notes(model, ascii_to_id_dict: dict, initial_note_ascii: str, length: int) -> (list, list):
 	"""
 	Generates a piece of notes given a starting note
@@ -17,7 +26,7 @@ def generate_notes(model, ascii_to_id_dict: dict, initial_note_ascii: str, lengt
 	:return: a generated piece of ASCII characters, a generated piece of IDs
 	"""
 	sample_n = 5  # The top sample_n chords are chosen from randomly when generating the next chord of the piece
-	reverse_dictionary = {id: ascii for ascii, id in ascii_to_id_dict.items()}
+	id_to_ascii_dict = reverse_dictionary(ascii_to_id_dict)
 
 	first_note_id = ascii_to_id_dict[initial_note_ascii]
 	next_input = [[first_note_id]]
@@ -31,7 +40,7 @@ def generate_notes(model, ascii_to_id_dict: dict, initial_note_ascii: str, lengt
 		top_probs = np.exp(probs[top_note_ids]) / sum(np.exp(probs[top_note_ids]))
 		next_chord_id = np.random.choice(top_note_ids, p=top_probs)
 
-		ascii_piece.append(reverse_dictionary[next_chord_id])
+		ascii_piece.append(id_to_ascii_dict[next_chord_id])
 		next_input[0].append(next_chord_id)
 	return ascii_piece, next_input
 
@@ -74,15 +83,6 @@ def generate_durations_and_offsets(model, piece: list) -> list:
 
 		next_input.append(next_dot_id)
 	return [next_input]
-
-
-def reverse_dictionary(dictionary: dict) -> dict:
-	"""
-    Reverses a bijective dictionary
-    :param dictionary: a bijective dictionary
-    :return: the input dictionary with keys ad values reversed
-    """
-	return {value: key for key, value in dictionary.items()}
 
 
 def id_to_ascii(id_piece: list, id_to_ascii_dict: dict) -> list:

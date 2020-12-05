@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 from collections import defaultdict as ddict
 
+
 def Attention_Matrix(K, Q, use_mask=False):
     """
     STUDENT MUST WRITE:

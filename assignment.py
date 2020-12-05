@@ -5,16 +5,6 @@ from processing.preprocess import *
 from processing.generate_midi import *
 from Models.duration_gen import *
 
-
-def reverse_dictionary(dictionary: dict) -> dict:
-    """
-    Reverses a bijective dictionary
-    :param dictionary: a bijective dictionary
-    :return: the input dictionary with keys ad values reversed
-    """
-    return {value: key for key, value in dictionary.items()}
-
-
 def main():
     '''get data, init models, sys_arguments stuff,
      train and test note gen, mid process, train and test duration gen, post processing '''
