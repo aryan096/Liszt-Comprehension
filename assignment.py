@@ -35,8 +35,8 @@ def main():
     #id_to_ascii = reverse_dictionary(ascii_to_id)
     ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
     # TODO - initialize NoteGen model
-    #note_model = create_note_gen_network(len(ascii_to_id))
-    note_model = tf.keras.models.load_model('./checkpoints/notes_model_checkpoint')
+    note_model = create_note_gen_network(len(ascii_to_id))
+    note_model.load_weights('./checkpoints/notes_model_checkpoint')
     # TODO - train NoteGen model
     #train_note_gen(note_model, note_id_inputs, note_id_labels, 1)
     # TODO - test NoteGen model - print perplexity
@@ -101,7 +101,7 @@ def main2():
     duration_gen_time = time.time()
     print("Time elapsed for DurationGen training/testing = {} minutes".format((duration_gen_time - note_gen_time)/60))
 
-    note_model.save('./checkpoints/notes_model_checkpoint')
+    note_model.save_weights('./checkpoints/notes_model_checkpoint')
     duration_model.save_weights('./checkpoints/duration_model_checkpoint')
 
 if __name__ == '__main__':
