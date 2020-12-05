@@ -49,8 +49,8 @@ def move_one_trackers(midi_folder, target_folder):
                         shutil.copy2(midi_folder + '/' + composer + '/' + elm, target_folder + '/' + composer + '/' + elm)
             print(composer + ": {}".format(counter))
 
-move_one_trackers(r"/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt-Comprehension/data",
-                  r"/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt-Comprehension/OneTrackData")
+#move_one_trackers(r"/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt-Comprehension/data",
+#                  r"/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt-Comprehension/OneTrackData")
 
 
 def move_one_trackers_mido(midi_folder, target_folder):
@@ -71,5 +71,27 @@ def move_one_trackers_mido(midi_folder, target_folder):
 
 #move_one_trackers_mido(r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data",
 #                  r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\OneTrackData")
+
+def transpose(midi_folder):
+    composer_folders = os.listdir(midi_folder)
+
+    for composer in composer_folders:
+        if composer != "Chopin":
+            if re.match('[\._]', composer) is None:  # TODO - fix if wrong
+                midi_files = os.listdir(midi_folder + '/' + composer)
+                for elm in midi_files:
+                    if re.match('.*\.mid[i]?', elm) is not None:  # TODO - fix if wrong
+                        piece = midi_to_m21(midi_folder + '/' + composer + '/' + elm)
+                        for i in range(1, 4):
+                            new_piece = piece.transpose(i)
+                            new_file_name = "transposed_"+str(i)+"_"+elm+"i"
+                            new_piece.write("midi", new_file_name)
+                            current_directory = os.getcwd()
+                            separator = "\\" if os.name == 'nt' else '/'
+                            target_directory = midi_folder + separator + composer + separator + new_file_name
+                            shutil.move(current_directory + separator + new_file_name, target_directory)
+
+transpose(r'/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt-Comprehension/OneTrackData')
+
 
 
