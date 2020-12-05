@@ -5,14 +5,15 @@ import tensorflow as tf
 import re
 import pickle
 # ToDo: (general)
-# 1. separate training and generation (along with saving/loading of weights)
+# 1. separate training and generation (along with saving/loading of weights) #TODO-NE
 # 2. Find way to store data (ary)
 # 3. not choosing start/stop/pad ids (in duration) #TODO-NE
 # 4. remove start stop pad tokens from pitch to ascii #TODO-NE
-# 5. flattening data
+# 5. flattening data #TODO-NE
 # 6. implement multi-head #TODO-NE (sorta)
 # 7. random file naming/write directly to Generated Pieces #TODO-NE
 # 8. Figure out GCP
+# 9. write/read dicts in the main functions
 
 
 
