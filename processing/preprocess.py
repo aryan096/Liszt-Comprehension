@@ -1,6 +1,5 @@
 from music21 import *
 import os
-import random
 import tensorflow as tf
 import re
 import pickle
@@ -14,17 +13,17 @@ import pickle
 # 7. random file naming/write directly to Generated Pieces #TODO-NE
 # 8. Figure out GCP
 # 9. write/read dicts in the main functions
+# 10. clean up imports and files (doc strings, random comments, etc)
+# 11. update requirements - if someone who uses the venv we created, just call pip3 freeze > requirements.txt and
+#     it will do it automatically (I think)
 
 
 
 PAD_TOKEN = "**PAD**"
-# PAD_ASCII = chr(35)
 PAD_ID = 2
 STOP_TOKEN = "**STOP**"
-# STOP_ASCII = chr(34)
 STOP_ID = 1
 START_TOKEN = "**START**"
-# START_ASCII = chr(33) #TODO if used, change to not 33
 START_ID = 0
 REST_TOKEN = "rest"
 REST_ASCII = chr(33)
@@ -62,13 +61,11 @@ def get_notes_and_durations(score) -> (list, list, list):
 	"""
 	durations = []
 	offset = []
-	# This loop goes through everything in the score, adds notes, chords, and
-	# rests to the sounds list, and durations to the durations list
 	sounds = score.flat.notesAndRests
 
+	# This loop goes through everything in the score, adds notes, chords, and rests to the sounds list,
+	# and durations to the durations list
 	for sound in sounds:
-		# add durations
-		#print(sound, sound.duration.quarterLength)
 		durations.append(sound.duration.quarterLength)
 		offset.append(sound.offset)
 
@@ -85,64 +82,60 @@ def note_pitchify(score: list) -> list:
 	:return: a list of lists containing note names with octaves
 	"""
 	pitches = []
-	for thing in score:
-		if isinstance(thing, note.Note):
-			# if thing is a note
-			pitch_thing = [thing.nameWithOctave]
+	for element in score:
+		if isinstance(element, note.Note):
+			# if element is a note
+			pitch_thing = [element.nameWithOctave]
 
-		elif isinstance(thing, chord.Chord):
-			# if thing is a chord
-			pitch_thing = [note_obj.nameWithOctave for note_obj in thing.pitches]
+		elif isinstance(element, chord.Chord):
+			# if element is a chord
+			pitch_thing = [note_obj.nameWithOctave for note_obj in element.pitches]
 
-		elif isinstance(thing, note.Rest):
-			# if thing is a rest
+		elif isinstance(element, note.Rest):
+			# if element is a rest
 			pitch_thing = [REST_TOKEN]
 
 		else:
-			# if thing is magically something else
+			# if element is magically something else
 			pitch_thing = [REST_TOKEN]
 
 		pitches.append(pitch_thing)
 	return pitches
 
+# I dont think we ever used these functions
 
-def amend_duration_dictionary(duration_dictionary: dict, durations: list):
-	"""
-	Give each duration encountered a unique integer id
-	:param durations: a list of all durations encountered in preprocessing
-	:return: None
-	"""
-
-	# each duration is keyed with an integer starting from
-	for duration in durations:
-		# generate random key between 1000 and 100000
-		# this range should be more than good enough
-		curr = random.randint(1000, 100000)
-		while curr in duration_dictionary:
-			curr = random.randint(1000, 100000)
-
-		if duration not in duration_dictionary.values():
-			# add key of duration and map it to the value
-			duration_dictionary[duration] = curr
-
-	return duration_dictionary
-
-
-def pad_and_token(max_length: int, stripped_piece: list) -> list:
-	"""
-	Pad each piece, now in ASCII form, to fit length of longest piece and add a start and stop token
-	:param max_length: length to which each piece should be padded
-	:param stripped_piece: either the notes or durations of a piece in ASCII form
-	:return: padded, start tokened, and stop tokened list of ASCII characters
-	"""
-	# ToDo:
-	# add start token
-	# add stop token
-	# pad to correct max length
-	padded = []
-	return padded
-
+# def amend_duration_dictionary(duration_dictionary: dict, durations: list):
+# 	"""
+# 	Give each duration encountered a unique integer id
+# 	:param durations: a list of all durations encountered in preprocessing
+# 	:return: None
+# 	"""
 #
+# 	# each duration is keyed with an integer starting from
+# 	for duration in durations:
+# 		# generate random key between 1000 and 100000
+# 		# this range should be more than good enough
+# 		curr = random.randint(1000, 100000)
+# 		while curr in duration_dictionary:
+# 			curr = random.randint(1000, 100000)
+#
+# 		if duration not in duration_dictionary.values():
+# 			# add key of duration and map it to the value
+# 			duration_dictionary[duration] = curr
+#
+# 	return duration_dictionary
+# def pad_and_token(max_length: int, stripped_piece: list) -> list:
+# 	"""
+# 	Pad each piece, now in ASCII form, to fit length of longest piece and add a start and stop token
+# 	:param max_length: length to which each piece should be padded
+# 	:param stripped_piece: either the notes or durations of a piece in ASCII form
+# 	:return: padded, start tokened, and stop tokened list of ASCII characters
+# 	"""
+# 	# add start token
+# 	# add stop token
+# 	# pad to correct max length
+# 	padded = []
+# 	return padded
 # def duration_to_id(durations: list, duration_dictionary: dict) -> list:
 # 	"""
 # 	Turn each duration in durations into its unique id
@@ -156,11 +149,12 @@ def pad_and_token(max_length: int, stripped_piece: list) -> list:
 #
 # 	return durations_unique_ids
 
-def duration_offset_idify(duration_offsets: list, duration_id_dict):
+
+def duration_offset_idify(duration_offsets: list, duration_id_dict) -> list:
 	"""
-	Turn each duration in durations into its unique id
-	:param duration_offsets: a list of durations, offset tuples
-	:param duration_id_dict: a dictionary mapping durations,offset tuple to integer ids
+	Turn each duration_offset_tuple (dot) into its unique id
+	:param duration_offsets: a list of dots
+	:param duration_id_dict: a dictionary mapping dots to integer ids
 	:return: a list of integers of length length_of_longest_piece
 	"""
 	duration_offset_id_piece = []
@@ -178,7 +172,7 @@ def note_asciify(chords: list, ascii_dict: dict) -> list:
 	Turns strings of note names and rests into ASCII characters
 	:param chords: a list of lists of note names
 	:param ascii_dict: a dictionary mapping note name to ASCII
-	:return: a list of ascii characters
+	:return: a list of ASCII characters
 	"""
 	ascii_piece = []
 	for chord in chords:
@@ -194,7 +188,7 @@ def note_asciify(chords: list, ascii_dict: dict) -> list:
 	return ascii_piece
 
 
-def note_idify(asciis: list, id_dict):
+def note_idify(asciis: list, id_dict) -> list:
 	"""
 	Turns ascii characters into unique IDs
 	:param asciis: a list of ASCII characters
@@ -221,15 +215,17 @@ def get_inputs_and_labels(data):
 	labels = [data[i][1:] for i in range(len(data))]
 	return tf.convert_to_tensor(inputs), tf.convert_to_tensor(labels)
 
+
 def read_dicts_from_file():
 	"""
 	Reads everything from the db_dict file
 	:return: note_id_input, note_id_labels, pitch_to_ascii and ascii_to_id and dot_to_id
 	"""
-    # for reading also binary mode is important
+	# for reading also binary mode is important
 	dict_db_file = open('dict_db', 'rb')
 	dict_db = pickle.load(dict_db_file)
 	return dict_db['note_id_inputs'], dict_db['note_id_labels'], dict_db['pitch_to_ascii'], dict_db['ascii_to_id'], dict_db['dot_to_id']
+
 
 def write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to_id, dot_to_id):
 	"""
@@ -248,20 +244,23 @@ def write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to
 	dict_db['note_id_labels'] = note_id_labels
 	dict_db['dot_to_id'] = dot_to_id
 	dict_db_file = open('dict_db', 'wb')
-    # source, destination
+	# source, destination
 	pickle.dump(dict_db, dict_db_file)
 	dict_db_file.close()
 
+
 def get_data(midi_folder, window_size: int):
 	"""
-	Does all the preprocessing
+	Does all the preprocessing for NoteGen and the pre-preprocessing for DurationGen
 	:param midi_folder: a directory of all midi files
 	:param window_size: window size for data
-	:return: notes in pieces as an id array of shape [num_pieces, max_piece_length],
-			durations in pieces as an id array of shape [num_pieces, max_piece_length],
-			dictionary mapping id's to ASCII characters,
-			dictionary mapping id's to durations,
-			pad_token_id
+	:return: notes in pieces as an id array of shape [num_pieces, window_size],
+			note inputs as an id array,
+			note labels as an id array,
+			dictionary mapping ASCII to unique id,
+			dictionary mapping pitch to ASCII,
+			dictionary mapping dot to unique id,
+			durations in pieces as an id array of shape [num_pieces, window_size],
 	"""
 	# initialize the dicts
 	pitch_to_ascii = {}
@@ -272,9 +271,6 @@ def get_data(midi_folder, window_size: int):
 	#_, _, pitch_to_ascii, ascii_to_id, duration_offset_dict = read_dicts_from_file()
 
 	# add the necessary token stuff to the dict (although it is probably in it anyway)
-	# pitch_to_ascii[START_TOKEN] = chr(33)
-	# pitch_to_ascii[STOP_TOKEN] = chr(34)
-	# pitch_to_ascii[PAD_TOKEN] = chr(35)
 	pitch_to_ascii[REST_TOKEN] = REST_ASCII
 
 	corpus_note_id_batches = []
@@ -285,8 +281,9 @@ def get_data(midi_folder, window_size: int):
 	separator = "\\" if os.name == 'nt' else '/'
 
 	for elm in midi_files:
-		if re.match('.*\.mid[i]?', elm) is not None: #TODO - fix if wrong
+		if re.match('.*\.mid[i]?', elm) is not None:
 			m21_score = midi_to_m21(midi_folder + separator + elm)  # this returns the m21 score object
+
 			# this gets the list of notes/chords/rests, the list of durations, and the list of offsets
 			score, duration_offset_tuples = get_notes_and_durations(m21_score)
 			id_duration_offsets = duration_offset_idify(duration_offset_tuples, dot_to_id)
@@ -306,10 +303,8 @@ def get_data(midi_folder, window_size: int):
 	note_id_inputs, note_id_labels = get_inputs_and_labels(corpus_note_id_batches)
 
 	corpus_duration_offset_batches = tf.convert_to_tensor(corpus_duration_offset_batches)
-	#duration_offset_id_inputs, duration_offset_id_labels = get_inputs_and_labels(corpus_duration_offset_batches)
 
 	# function call to write the dictionaries to a file
-	#print(duration_offset_dict)
 	write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to_id, dot_to_id)
 
 	return corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches
@@ -317,12 +312,11 @@ def get_data(midi_folder, window_size: int):
 
 def prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_id_batches):
 	"""
-
-	:param corpus_note_id_batches:
-	:param corpus_duration_offset_id_batches:
-	:return:
+	Processes data for the DurationGen model
+	:param corpus_note_id_batches: all note data - essentialy the language our data exisits in
+	:param corpus_duration_offset_id_batches: all dot data - essentially the language we are translating to
+	:return: id notes as inputs, id dots as labels
 	"""
-	#prepped_note_id_batches = tf.convert_to_tensor([])
 	corpus_note_id_batches = list(corpus_note_id_batches.numpy())
 	corpus_duration_offset_id_batches = list(corpus_duration_offset_id_batches.numpy())
 	for i in range(len(corpus_note_id_batches)):

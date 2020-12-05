@@ -4,9 +4,13 @@ import music21
 import shutil
 import re
 
+# This is a miscellaneous file we used to process midi files in various ways
+
+
+
 def convert(midi_folder, out_folder):
     midi_files = os.listdir(midi_folder)[:1]
-    for elm in midi_files:
+    for elm in midi_mfiles:
         m = mido.MidiFile(midi_folder + "\\" + elm)
         print(m.tracks)
         m = mido.merge_tracks(m.tracks)
