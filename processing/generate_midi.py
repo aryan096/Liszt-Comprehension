@@ -161,7 +161,7 @@ def ascii_to_m21(ascii_notes: list, ascii_to_m21_dict: dict, durations_and_offse
 
 
 def generate_midi(note_model, ascii_id_dict: dict, id_duration_offset_dict: dict, ascii_m21_dict: dict,
-                  initial_note_ascii: str, length: int, duration_model=None):# -> None:
+                  initial_note_ascii: str, length: int, duration_model=None) -> None:
 	"""
 	Does the complete postprocessing using above-defined helper functions and saves a file called "first_ever_piece.midi"
 	to the current directory
@@ -196,7 +196,6 @@ def generate_midi(note_model, ascii_id_dict: dict, id_duration_offset_dict: dict
 
 	piece.write("midi", file_name)
 	shutil.move(current_directory + separator + file_name, target_directory + separator + file_name)
-	return piece
 	# Opens a MusicXML reader and shows the sheet music for the generated piece
 	#piece.show()  # only works if MusicXML reader like MuseScore, Finale, or Sibelius is installed
 
