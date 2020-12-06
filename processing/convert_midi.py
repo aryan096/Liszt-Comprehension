@@ -41,7 +41,7 @@ def move_one_trackers(midi_folder, target_folder):
     composer_folders = os.listdir(midi_folder)
 
     for composer in composer_folders:
-        if composer == "Scarlatti":
+        if composer == "Mozart":
             midi_files = os.listdir(midi_folder + '/' + composer)
             counter = 0
             for elm in midi_files:
@@ -80,7 +80,7 @@ def transpose(midi_folder):
     composer_folders = os.listdir(midi_folder)
 
     for composer in composer_folders:
-        if composer != "Chopin":
+        if composer == "Mozart":
             if re.match('[\._]', composer) is None:  # TODO - fix if wrong
                 midi_files = os.listdir(midi_folder + '/' + composer)
                 for elm in midi_files:

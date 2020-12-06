@@ -102,53 +102,6 @@ def note_pitchify(score: list) -> list:
 		pitches.append(pitch_thing)
 	return pitches
 
-# I dont think we ever used these functions
-
-# def amend_duration_dictionary(duration_dictionary: dict, durations: list):
-# 	"""
-# 	Give each duration encountered a unique integer id
-# 	:param durations: a list of all durations encountered in preprocessing
-# 	:return: None
-# 	"""
-#
-# 	# each duration is keyed with an integer starting from
-# 	for duration in durations:
-# 		# generate random key between 1000 and 100000
-# 		# this range should be more than good enough
-# 		curr = random.randint(1000, 100000)
-# 		while curr in duration_dictionary:
-# 			curr = random.randint(1000, 100000)
-#
-# 		if duration not in duration_dictionary.values():
-# 			# add key of duration and map it to the value
-# 			duration_dictionary[duration] = curr
-#
-# 	return duration_dictionary
-# def pad_and_token(max_length: int, stripped_piece: list) -> list:
-# 	"""
-# 	Pad each piece, now in ASCII form, to fit length of longest piece and add a start and stop token
-# 	:param max_length: length to which each piece should be padded
-# 	:param stripped_piece: either the notes or durations of a piece in ASCII form
-# 	:return: padded, start tokened, and stop tokened list of ASCII characters
-# 	"""
-# 	# add start token
-# 	# add stop token
-# 	# pad to correct max length
-# 	padded = []
-# 	return padded
-# def duration_to_id(durations: list, duration_dictionary: dict) -> list:
-# 	"""
-# 	Turn each duration in durations into its unique id
-# 	:param durations: a list of durations of length length_of_longest_piece
-# 	:param duration_dictionary: a dictionary mapping durations to integer ids
-# 	:return: a list of integers of length length_of_longest_piece
-# 	"""
-# 	durations_unique_ids = []
-# 	for duration_length in durations:
-# 		durations_unique_ids.append(duration_dictionary[duration_length])
-#
-# 	return durations_unique_ids
-
 
 def duration_offset_idify(duration_offsets: list, duration_id_dict) -> list:
 	"""
