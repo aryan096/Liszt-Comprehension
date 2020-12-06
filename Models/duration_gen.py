@@ -19,7 +19,7 @@ class DurationGen(Model):
         self.duration_vocab_size = duration_vocab_size
 
         self.batch_size = 100 # TODO - change as required, increase if GPU
-        self.embedding_size = 30 # TODO - change as required
+        self.embedding_size = 75 # TODO - change as required
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
         self.note_embedding = tf.keras.layers.Embedding(self.note_vocab_size, self.embedding_size)
@@ -33,8 +33,9 @@ class DurationGen(Model):
         # TODO - add more decoders if necessary
         self.decoder1 = transformer.Transformer_Block(self.embedding_size, is_decoder=True, multi_headed=True)
 
-        self.dense1 = tf.keras.layers.Dense(300, activation='relu') # TODO - change as required
-        self.dense2 = tf.keras.layers.Dense(self.duration_vocab_size, activation='softmax') # TODO - change as required
+        self.dense1 = tf.keras.layers.Dense(100, activation='relu') # TODO - change as required
+        self.dense2 = tf.keras.layers.Dense(100, activation='relu') # TODO - change as required
+        self.dense3 = tf.keras.layers.Dense(self.duration_vocab_size, activation='softmax') # TODO - change as required
         # TODO - add more dense layers if necessary
 
     def call(self, encoder_input, decoder_input):
@@ -56,11 +57,16 @@ class DurationGen(Model):
         # 4) Pass the english embeddings and output of your encoder, to the decoder
         #print("This is fine ",duration_with_position)
         decoder1_out = self.decoder1(duration_with_position, encoder1_out)
+        
+        
+        
+        
         # 5) Apply dense layer(s) to the decoder out to generate probabilities
         dense1_out = self.dense1(decoder1_out)
         dense2_out = self.dense2(dense1_out)
+        dense3_out = self.dense3(dense2_out)
 
-        return dense2_out
+        return dense3_out
 
     def loss_function(self, prbs, labels):
         '''
