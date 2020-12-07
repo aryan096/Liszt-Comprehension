@@ -1,2 +1,2 @@
-model_checkpoint_path: "duration_model_checkpoint"
-all_model_checkpoint_paths: "duration_model_checkpoint"
+model_checkpoint_path: "notes_model_checkpoint"
+all_model_checkpoint_paths: "notes_model_checkpoint"

@@ -3,6 +3,7 @@ import os
 import tensorflow as tf
 import re
 import pickle
+import numpy as np
 # ToDo: (general)
 # 1. separate training and generation (along with saving/loading of weights) #TODO-NE
 # 2. Find way to store data (ary)
@@ -60,18 +61,44 @@ def get_notes_and_durations(score) -> (list, list, list):
 	:return: a list of chords, a list of durations, and a list of offsets of length number_of_chords_in_piece
 	"""
 	durations = []
-	offset = []
-	sounds = score.flat.notesAndRests
+	offsets = []
+	notes_and_rests = list(score.flat.notesAndRests)
+	sounds = []
+	no_rest_offsets = []
+	out_durations = []
+	out_offsets = []
+	out_sounds = []
+	actual_durations = []
+	actual_offsets = []
+	actual_sounds = []
+
 
 	# This loop goes through everything in the score, adds notes, chords, and rests to the sounds list,
 	# and durations to the durations list
-	for sound in sounds:
-		durations.append(sound.duration.quarterLength)
-		offset.append(sound.offset)
+	for sound in notes_and_rests:
+		if not (isinstance(sound, note.Rest) and sound.duration.quarterLength > 4):
+			sounds.append(sound)
+			durations.append(sound.duration.quarterLength)
+			offsets.append(sound.offset)
+			if not isinstance(sound, note.Rest):
+				no_rest_offsets.append(sound.offset)
 
-	incremented_offsets = incrementalize_offset(offset)
-	duration_offset_tuples = zip(durations, incremented_offsets)
-	return sounds, duration_offset_tuples
+	for i, sound in enumerate(sounds):
+		if not (isinstance(sound, note.Rest) and sound.offset in no_rest_offsets):
+			out_sounds.append(sounds[i])
+			out_offsets.append(offsets[i])
+			out_durations.append(durations[i])
+
+	incremented_offsets = incrementalize_offset(out_offsets)
+
+	for i, offset in enumerate(incremented_offsets):
+		if not(isinstance(out_sounds[i], note.Rest) and offset == 0):
+			actual_sounds.append(out_sounds[i])
+			actual_offsets.append(out_offsets[i])
+			actual_durations.append(out_durations[i])
+
+	duration_offset_tuples = list(zip(actual_durations, incremented_offsets))
+	return actual_sounds, duration_offset_tuples
 
 
 
@@ -230,7 +257,7 @@ def get_data(midi_folder, window_size: int):
 	corpus_duration_offset_batches = []
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder)[:1] # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder)[3:4] # TODO - use this to only get some files if necessary
 	separator = "\\" if os.name == 'nt' else '/'
 
 	for elm in midi_files:
@@ -239,6 +266,12 @@ def get_data(midi_folder, window_size: int):
 
 			# this gets the list of notes/chords/rests, the list of durations, and the list of offsets
 			score, duration_offset_tuples = get_notes_and_durations(m21_score)
+			print("score: \n" + str(score[564]))
+			print("dots: \n" + str(duration_offset_tuples[564]))
+			# list_dots = list(duration_offset_tuples)
+			print("arg_max: " + str(np.argmax([x for x, y in duration_offset_tuples])))
+			print("max: " + str(max([x for x, y in duration_offset_tuples])))
+			# print(str(list_dots))
 			id_duration_offsets = duration_offset_idify(duration_offset_tuples, dot_to_id)
 			pitch_score = note_pitchify(score)
 			ascii_score = note_asciify(pitch_score, pitch_to_ascii)

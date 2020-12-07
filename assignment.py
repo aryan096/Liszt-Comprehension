@@ -22,6 +22,10 @@ def train_and_save():
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
         "./data/Chopin", WINDOW_SIZE)
 
+    for ascii in ascii_to_id.keys():
+        if REST_ASCII in ascii:
+            print(ascii)
+
     #id_to_ascii = reverse_dictionary(ascii_to_id)
     ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
     # TODO - initialize NoteGen model
@@ -64,6 +68,13 @@ def load_and_generate():
     # need note_vocab
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
         "./data/Chopin", WINDOW_SIZE)
+
+    for ascii in ascii_to_id.keys():
+        if REST_ASCII in ascii:
+            print(ascii)
+
+    #print("dot_to_id: \n" + str(dot_to_id))
+    #print("ascii_to_id \n" + str(ascii_to_id))
 
     #id_to_ascii = reverse_dictionary(ascii_to_id)
     ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
