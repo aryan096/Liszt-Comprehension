@@ -80,7 +80,7 @@ class DurationGen(Model):
         return tf.reduce_sum(tf.keras.losses.sparse_categorical_crossentropy(labels, prbs))
 
 
-def duration_train(model, train_notes, train_duration):
+def duration_train(model, train_notes, train_duration, epochs):
     """
     Runs through one epoch - all training examples.
 
@@ -91,27 +91,28 @@ def duration_train(model, train_notes, train_duration):
     :return: None
     """
     print("Begin Training")
+    for i in range(epochs):
+        print("  epoch {}:".format(i))
+        num_trained = 0
+        while num_trained < len(train_notes):
+            notes_batch = train_notes[num_trained: num_trained + model.batch_size]
+            duration_batch = train_duration[num_trained: num_trained + model.batch_size]
 
-    num_trained = 0
-    while num_trained < len(train_notes):
-        notes_batch = train_notes[num_trained: num_trained + model.batch_size]
-        duration_batch = train_duration[num_trained: num_trained + model.batch_size]
+            with tf.GradientTape() as tape:
+                # remove last token from english sentences
+                #decoder_input = tf.convert_to_tensor([lst[:-1] for lst in duration_batch])
+                probabilities = model(notes_batch, duration_batch)
+                # remove first token from batch to create labels
+                #labels = tf.convert_to_tensor([lst[1:] for lst in duration_batch], dtype="int64")
+                #mask = np.where(labels == duration_padding_index, 0, 1)
+                loss = model.loss_function(probabilities, duration_batch)
 
-        with tf.GradientTape() as tape:
-            # remove last token from english sentences
-            #decoder_input = tf.convert_to_tensor([lst[:-1] for lst in duration_batch])
-            probabilities = model(notes_batch, duration_batch)
-            # remove first token from batch to create labels
-            #labels = tf.convert_to_tensor([lst[1:] for lst in duration_batch], dtype="int64")
-            #mask = np.where(labels == duration_padding_index, 0, 1)
-            loss = model.loss_function(probabilities, duration_batch)
+            num_trained += model.batch_size
+            if num_trained % (1 * model.batch_size) == 0:
+                print("     Loss on training after {} batches = {}".format(num_trained / (model.batch_size), loss))
 
-        num_trained += model.batch_size
-        if num_trained % (1 * model.batch_size) == 0:
-            print("     Loss on training after {} batches = {}".format(num_trained / (model.batch_size), loss))
-
-        gradients = tape.gradient(loss, model.trainable_variables)
-        model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+            gradients = tape.gradient(loss, model.trainable_variables)
+            model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
 
 

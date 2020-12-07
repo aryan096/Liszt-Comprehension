@@ -257,7 +257,7 @@ def get_data(midi_folder, window_size: int):
 	corpus_duration_offset_batches = []
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder)[3:4] # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder)[:] # TODO - use this to only get some files if necessary
 	separator = "\\" if os.name == 'nt' else '/'
 
 	for elm in midi_files:
@@ -266,11 +266,11 @@ def get_data(midi_folder, window_size: int):
 
 			# this gets the list of notes/chords/rests, the list of durations, and the list of offsets
 			score, duration_offset_tuples = get_notes_and_durations(m21_score)
-			print("score: \n" + str(score[564]))
-			print("dots: \n" + str(duration_offset_tuples[564]))
+			#print("score: \n" + str(score[564]))
+			#print("dots: \n" + str(duration_offset_tuples[564]))
 			# list_dots = list(duration_offset_tuples)
-			print("arg_max: " + str(np.argmax([x for x, y in duration_offset_tuples])))
-			print("max: " + str(max([x for x, y in duration_offset_tuples])))
+			#print("arg_max: " + str(np.argmax([x for x, y in duration_offset_tuples])))
+			#print("max: " + str(max([x for x, y in duration_offset_tuples])))
 			# print(str(list_dots))
 			id_duration_offsets = duration_offset_idify(duration_offset_tuples, dot_to_id)
 			pitch_score = note_pitchify(score)

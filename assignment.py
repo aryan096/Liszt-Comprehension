@@ -20,14 +20,12 @@ def train_and_save():
     # need note_gen_test_inputs and note_gen_test_labels (these are the same but shifted by 1)
     # need note_vocab
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
-        "./data/Chopin", WINDOW_SIZE)
+        "./OneTrackData/Bach", WINDOW_SIZE)
 
-    for ascii in ascii_to_id.keys():
-        if REST_ASCII in ascii:
-            print(ascii)
+    print(pitch_to_ascii)
 
     #id_to_ascii = reverse_dictionary(ascii_to_id)
-    ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
+    #ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
     # TODO - initialize NoteGen model
     note_model = create_note_gen_network(len(ascii_to_id))
     # TODO - train NoteGen model
@@ -41,7 +39,7 @@ def train_and_save():
     if sys.argv[1] == "NOTE_DURATION":
         duration_model = DurationGen(len(ascii_to_id), len(dot_to_id), WINDOW_SIZE+2)
         prepped_note_ids, prepped_dot_ids = prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches)
-        duration_train(duration_model, prepped_note_ids, prepped_dot_ids)
+        duration_train(duration_model, prepped_note_ids, prepped_dot_ids, 5)
     else:
         duration_model = None
 
@@ -67,11 +65,8 @@ def load_and_generate():
     # need note_gen_test_inputs and note_gen_test_labels (these are the same but shifted by 1)
     # need note_vocab
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
-        "./data/Chopin", WINDOW_SIZE)
+        "./OneTrackData/Bach", WINDOW_SIZE)
 
-    for ascii in ascii_to_id.keys():
-        if REST_ASCII in ascii:
-            print(ascii)
 
     #print("dot_to_id: \n" + str(dot_to_id))
     #print("ascii_to_id \n" + str(ascii_to_id))
@@ -109,4 +104,4 @@ def load_and_generate():
 
 if __name__ == '__main__':
     train_and_save()
-    load_and_generate()
+    #load_and_generate()
