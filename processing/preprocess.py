@@ -258,7 +258,7 @@ def get_data(midi_folder, window_size: int):
 	pitch_to_ascii[REST_TOKEN] = REST_ASCII
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder)[:] # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder)[:]  # TODO - use this to only get some files if necessary
 	separator = "\\" if os.name == 'nt' else '/'
 
 	for elm in midi_files:
