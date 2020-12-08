@@ -20,7 +20,7 @@ def train_and_save():
     # need note_gen_test_inputs and note_gen_test_labels (these are the same but shifted by 1)
     # need note_vocab
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
-        "./OneTrackData/Bach", WINDOW_SIZE)
+        "./data/Scarlatti", WINDOW_SIZE)
 
     #print(pitch_to_ascii)
 
