@@ -204,10 +204,10 @@ def read_dicts_from_file():
 	# for reading also binary mode is important
 	dict_db_file = open('dict_db', 'rb')
 	dict_db = pickle.load(dict_db_file)
-	return dict_db['note_id_inputs'], dict_db['note_id_labels'], dict_db['pitch_to_ascii'], dict_db['ascii_to_id'], dict_db['dot_to_id']
+	return dict_db['corpus_note_id_batches'], dict_db['note_id_inputs'], dict_db['note_id_labels'], dict_db['ascii_to_id'], dict_db['pitch_to_ascii'], dict_db['dot_to_id'], dict_db['corpus_duration_offset_batches']
 
 
-def write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to_id, dot_to_id):
+def write_dicts_to_file(corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches):
 	"""
 	Writes the two dicts to a file
 	:param pitch_to_ascii: pitch to ascii dict
@@ -218,11 +218,13 @@ def write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to
 	"""
 	# pickle code to write the dictionaries to a file
 	dict_db = {}
+	dict_db['corpus_note_id_batches'] = corpus_note_id_batches
 	dict_db['pitch_to_ascii'] = pitch_to_ascii
 	dict_db['ascii_to_id'] = ascii_to_id
 	dict_db['note_id_inputs'] = note_id_inputs
 	dict_db['note_id_labels'] = note_id_labels
 	dict_db['dot_to_id'] = dot_to_id
+	dict_db['corpus_duration_offset_batches'] = corpus_duration_offset_batches
 	dict_db_file = open('dict_db', 'wb')
 	# source, destination
 	pickle.dump(dict_db, dict_db_file)
@@ -246,15 +248,14 @@ def get_data(midi_folder, window_size: int):
 	pitch_to_ascii = {}
 	ascii_to_id = {}
 	dot_to_id = {START_TOKEN: START_ID, STOP_TOKEN: STOP_ID, PAD_TOKEN: PAD_ID}
+	corpus_note_id_batches = []
+	corpus_duration_offset_batches = []
 
 	# read the dicts stored in the binary file
-	#_, _, pitch_to_ascii, ascii_to_id, duration_offset_dict = read_dicts_from_file()
+	corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = read_dicts_from_file()
 
 	# add the necessary token stuff to the dict (although it is probably in it anyway)
 	pitch_to_ascii[REST_TOKEN] = REST_ASCII
-
-	corpus_note_id_batches = []
-	corpus_duration_offset_batches = []
 
 	# list of files in midi_folder
 	midi_files = os.listdir(midi_folder)[:] # TODO - use this to only get some files if necessary
@@ -291,7 +292,7 @@ def get_data(midi_folder, window_size: int):
 	corpus_duration_offset_batches = tf.convert_to_tensor(corpus_duration_offset_batches)
 
 	# function call to write the dictionaries to a file
-	write_dicts_to_file(note_id_inputs, note_id_labels, pitch_to_ascii, ascii_to_id, dot_to_id)
+	write_dicts_to_file(corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches)
 
 	return corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches
 
@@ -305,6 +306,7 @@ def prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_id_batches)
 	"""
 	corpus_note_id_batches = list(corpus_note_id_batches.numpy())
 	corpus_duration_offset_id_batches = list(corpus_duration_offset_id_batches.numpy())
+	
 	for i in range(len(corpus_note_id_batches)):
 		corpus_note_id_batches[i] = [START_ID] + list(corpus_note_id_batches[i]) + [STOP_ID]
 		corpus_duration_offset_id_batches[i] = [START_ID] + list(corpus_duration_offset_id_batches[i]) + [STOP_ID]
@@ -321,5 +323,3 @@ def prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_id_batches)
 
 #print(corpus_note_id_batches, corpus_duration_offset_batches)
 #print(prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches))
-
-
