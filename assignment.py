@@ -22,14 +22,14 @@ def train_and_save():
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
         "./OneTrackData/Bach", WINDOW_SIZE)
 
-    print(pitch_to_ascii)
+    #print(pitch_to_ascii)
 
     #id_to_ascii = reverse_dictionary(ascii_to_id)
     #ascii_to_pitch = reverse_dictionary(pitch_to_ascii)
     # TODO - initialize NoteGen model
     note_model = create_note_gen_network(len(ascii_to_id))
     # TODO - train NoteGen model
-    train_note_gen(note_model, note_id_inputs, note_id_labels, 1)
+    train_note_gen(note_model, note_id_inputs, note_id_labels, 70)
     # TODO - test NoteGen model - print perplexity
 
     note_gen_time = time.time()
@@ -64,8 +64,10 @@ def load_and_generate():
     # need note_gen_train_inputs and note_gen_train_labels (these are the same but shifted by 1)
     # need note_gen_test_inputs and note_gen_test_labels (these are the same but shifted by 1)
     # need note_vocab
-    corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
-        "./OneTrackData/Bach", WINDOW_SIZE)
+    # corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
+    #     "./OneTrackData/Bach", WINDOW_SIZE)
+
+    corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = read_dicts_from_file()
 
 
     #print("dot_to_id: \n" + str(dot_to_id))
@@ -104,4 +106,4 @@ def load_and_generate():
 
 if __name__ == '__main__':
     train_and_save()
-    #load_and_generate()
+    load_and_generate()
