@@ -252,7 +252,7 @@ def get_data(midi_folder, window_size: int):
 	corpus_duration_offset_batches = []
 
 	# read the dicts stored in the binary file
-	corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = read_dicts_from_file()
+	_, _, _, ascii_to_id, pitch_to_ascii, dot_to_id, _ = read_dicts_from_file()
 
 	# add the necessary token stuff to the dict (although it is probably in it anyway)
 	pitch_to_ascii[REST_TOKEN] = REST_ASCII
@@ -306,7 +306,7 @@ def prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_id_batches)
 	"""
 	corpus_note_id_batches = list(corpus_note_id_batches.numpy())
 	corpus_duration_offset_id_batches = list(corpus_duration_offset_id_batches.numpy())
-	
+
 	for i in range(len(corpus_note_id_batches)):
 		corpus_note_id_batches[i] = [START_ID] + list(corpus_note_id_batches[i]) + [STOP_ID]
 		corpus_duration_offset_id_batches[i] = [START_ID] + list(corpus_duration_offset_id_batches[i]) + [STOP_ID]
