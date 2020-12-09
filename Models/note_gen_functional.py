@@ -1,9 +1,6 @@
 import tensorflow as tf
-import numpy as np
-from tensorflow.keras import Model
 from keras.layers import Dense, Dropout, GRU, Activation, Bidirectional, Flatten
-from keras_multi_head import MultiHeadAttention
-from Models.transformer_funcs import Multi_Headed
+
 # from preprocess ...
 
 
