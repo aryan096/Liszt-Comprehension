@@ -5,33 +5,33 @@ from processing.generate_midi import *
 from Models.duration_gen import *
 import random
 
+
 def config():
     model = None
     while model not in {"NOTE", "NOTE_DURATION"}:
-        model = input("NOTE or NOTE_DURATION? (type one of the options in all caps)")
+        model = input("NOTE or NOTE_DURATION? (type one of the options in all caps): ")
 
     train = None
     while train not in {"y", "n"}:
-        train = input("Do you want to train and save? (y/n)")
+        train = input("Do you want to train and save? (y/n): ")
 
     load = None
     while load not in {"y", "n"}:
-        load = input("Do you want to load and generate? (only say yes if you said yes in the previous question, or have trained before) (y/n)")
-
+        load = input("Do you want to load and generate? (only say yes if you said yes in the previous question, or have trained before) (y/n): ")
 
     if train == "y":
         composer = None
         while composer not in {"Bach", "Mozart", "Beethoven", "Scarlatti", "Chopin", "Liszt"}:
-            composer = input("Pick a composer: Bach, Mozart, Beethoven, Scarlatti, Chopin, Liszt")
+            composer = input("Pick a composer: Bach, Mozart, Beethoven, Scarlatti, Chopin, Liszt: ")
 
         one_track = "n"
         if composer != "Scarlatti":
-            one_track = input("OneTrack (y/n)")
+            one_track = input("OneTrack (y/n): ")
 
-        note_gen_epochs = int(input("How many NoteGen epochs? (int)"))
+        note_gen_epochs = int(input("How many NoteGen epochs? (int): "))
         duration_gen_epochs = None
         if model == "NOTE_DURATION":
-            duration_gen_epochs = int(input("How many DurationGen epochs? (int)"))
+            duration_gen_epochs = int(input("How many DurationGen epochs? (int): "))
 
         if one_track == "y":
             file_path_training_data = "./OneTrackData/" + composer
@@ -54,12 +54,12 @@ def config():
             exit()
         else:
             possible_files = os.listdir("./Trained Weights")
-            files_index = int(input("choose one number: \n" + "\n".join(["{} {}".format(i, elm) for i, elm in enumerate(possible_files)])))
+            files_index = int(input("choose one number: \n" + "\n".join(["{} {}".format(i, elm) for i, elm in enumerate(possible_files)]) + "\n"))
             file_path_read_weights = "./Trained Weights/" + possible_files[files_index]
 
             possible_files = os.listdir("./Dict Data")
             files_index = int(input(
-                "choose one number: \n" + "\n".join(["{} {}".format(i, elm) for i, elm in enumerate(possible_files)])))
+                "choose one number: \n" + "\n".join(["{} {}".format(i, elm) for i, elm in enumerate(possible_files)]) + "\n"))
             file_path_save_data = "./Dict Data/" + possible_files[files_index]
 
     return model, file_path_training_data, file_path_save_data, file_path_save_weights, file_path_read_weights, note_gen_epochs, duration_gen_epochs, train, load
