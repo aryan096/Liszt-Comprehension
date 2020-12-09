@@ -1,4 +1,3 @@
-import sys
 import time
 from Models.note_gen_functional import *
 from processing.preprocess import *
@@ -7,7 +6,6 @@ from Models.duration_gen import *
 import random
 
 def config():
-
     model = None
     while model not in {"NOTE", "NOTE_DURATION"}:
         model = input("NOTE or NOTE_DURATION? (type one of the options in all caps)")
@@ -64,17 +62,10 @@ def config():
                 "choose one number: \n" + "\n".join(["{} {}".format(i, elm) for i, elm in enumerate(possible_files)])))
             file_path_save_data = "./Dict Data/" + possible_files[files_index]
 
-
-
-
-
-
-
     return model, file_path_training_data, file_path_save_data, file_path_save_weights, file_path_read_weights, note_gen_epochs, duration_gen_epochs, train, load
 
 def train_and_save(file_path_training_data, file_path_save_data, file_path_save_weights, model_type, note_gen_epochs, duration_gen_epochs):
     '''Initialize, train, save'''
-
     start_time = time.time()
 
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
@@ -86,7 +77,6 @@ def train_and_save(file_path_training_data, file_path_save_data, file_path_save_
     note_gen_time = time.time()
     print("Time elapsed for NoteGen training/testing = {} minutes".format((note_gen_time - start_time)/60))
 
-    # TODO - if NOTE_DURATION, then do the same for the duration model
     if model_type == "NOTE_DURATION":
         duration_model = DurationGen(len(ascii_to_id), len(dot_to_id), WINDOW_SIZE+2)
         prepped_note_ids, prepped_dot_ids = prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches)
