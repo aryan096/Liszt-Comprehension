@@ -230,6 +230,14 @@ def write_dicts_to_file(file_path, corpus_note_id_batches, note_id_inputs, note_
 	pickle.dump(dict_db, dict_db_file)
 	dict_db_file.close()
 
+def split_train_and_test_data(inputs, labels):
+	n = len(inputs)
+	inputs_train = inputs[:int(n * 9/10)]
+	inputs_test = inputs[int(n * 9/10):]
+	labels_train = labels[:int(n * 9 / 10)]
+	labels_test = labels[int(n * 9 / 10):]
+
+	return inputs_train, labels_train, inputs_test,  labels_test
 
 def get_data(file_path_to_save_data, midi_folder, window_size: int):
 	"""

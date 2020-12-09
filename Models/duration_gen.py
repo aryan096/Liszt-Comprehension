@@ -93,18 +93,18 @@ def duration_train(model, train_notes, train_duration, epochs):
     print("Begin Training")
     for i in range(epochs):
         print("  epoch {}:".format(i))
+
+        shuffled_indices = tf.random.shuffle(tf.range(len(train_notes)))
+        train_notes = tf.gather(train_notes, shuffled_indices)
+        train_duration = tf.gather(train_duration, shuffled_indices)
+
         num_trained = 0
         while num_trained < len(train_notes):
             notes_batch = train_notes[num_trained: num_trained + model.batch_size]
             duration_batch = train_duration[num_trained: num_trained + model.batch_size]
 
             with tf.GradientTape() as tape:
-                # remove last token from english sentences
-                #decoder_input = tf.convert_to_tensor([lst[:-1] for lst in duration_batch])
                 probabilities = model(notes_batch, duration_batch)
-                # remove first token from batch to create labels
-                #labels = tf.convert_to_tensor([lst[1:] for lst in duration_batch], dtype="int64")
-                #mask = np.where(labels == duration_padding_index, 0, 1)
                 loss = model.loss_function(probabilities, duration_batch)
 
             num_trained += model.batch_size

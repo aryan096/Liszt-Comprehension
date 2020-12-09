@@ -72,7 +72,10 @@ def train_and_save(file_path_training_data, file_path_save_data, file_path_save_
         file_path_save_data, file_path_training_data, WINDOW_SIZE)
 
     note_model = create_note_gen_network(len(ascii_to_id))
-    train_note_gen(note_model, note_id_inputs, note_id_labels, note_gen_epochs)
+    note_id_inputs_train, note_id_labels_train, note_id_inputs_test, note_id_labels_test = \
+        split_train_and_test_data(note_id_inputs, note_id_labels)
+    train_note_gen(note_model, note_id_inputs_train, note_id_labels_train, note_gen_epochs)
+    test_note_gen(note_model, note_id_inputs_test, note_id_labels_test)
 
     note_gen_time = time.time()
     print("Time elapsed for NoteGen training/testing = {} minutes".format((note_gen_time - start_time)/60))
@@ -80,7 +83,10 @@ def train_and_save(file_path_training_data, file_path_save_data, file_path_save_
     if model_type == "NOTE_DURATION":
         duration_model = DurationGen(len(ascii_to_id), len(dot_to_id), WINDOW_SIZE+2)
         prepped_note_ids, prepped_dot_ids = prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches)
-        duration_train(duration_model, prepped_note_ids, prepped_dot_ids, duration_gen_epochs)
+        prepped_note_ids_train, prepped_dot_ids_train, prepped_note_ids_test, prepped_dot_ids_test = \
+            split_train_and_test_data(prepped_note_ids, prepped_dot_ids)
+        duration_train(duration_model, prepped_note_ids_train, prepped_dot_ids_train, duration_gen_epochs)
+        duration_test(duration_model, prepped_note_ids_test, prepped_dot_ids_test)
     else:
         duration_model = None
 
