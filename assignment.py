@@ -68,7 +68,8 @@ def load_and_generate():
     #     "./OneTrackData/Bach", WINDOW_SIZE)
 
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = read_dicts_from_file()
-
+    print(ascii_to_id)
+    print(pitch_to_ascii)
 
     #print("dot_to_id: \n" + str(dot_to_id))
     #print("ascii_to_id \n" + str(ascii_to_id))
@@ -97,13 +98,15 @@ def load_and_generate():
 
     #duration_gen_time = time.time()
     #print("Time elapsed for DurationGen training/testing = {} minutes".format((duration_gen_time - note_gen_time)/60))
-
-    initial_note_ascii = "$"
+    initial_note = ["C4", "E4", "G4"]
+    x = [pitch_to_ascii[note] for note in initial_note]
+    x.sort()
+    initial_note_ascii = "".join(list(x))
     generate_midi(note_model, ascii_to_id, reverse_dictionary(dot_to_id), ascii_to_pitch, initial_note_ascii, 100, duration_model)
     #note_model.save_weights('./checkpoints/notes_model_checkpoint')
     #duration_model.save_weights('./checkpoints/duration_model_checkpoint')
 
 
 if __name__ == '__main__':
-    train_and_save()
+    #train_and_save()
     load_and_generate()
