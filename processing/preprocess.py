@@ -196,18 +196,18 @@ def get_inputs_and_labels(data):
 	return tf.convert_to_tensor(inputs), tf.convert_to_tensor(labels)
 
 
-def read_dicts_from_file():
+def read_dicts_from_file(file_path):
 	"""
 	Reads everything from the db_dict file
 	:return: note_id_input, note_id_labels, pitch_to_ascii and ascii_to_id and dot_to_id
 	"""
 	# for reading also binary mode is important
-	dict_db_file = open('dict_db', 'rb')
+	dict_db_file = open(file_path, 'rb')
 	dict_db = pickle.load(dict_db_file)
 	return dict_db['corpus_note_id_batches'], dict_db['note_id_inputs'], dict_db['note_id_labels'], dict_db['ascii_to_id'], dict_db['pitch_to_ascii'], dict_db['dot_to_id'], dict_db['corpus_duration_offset_batches']
 
 
-def write_dicts_to_file(corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches):
+def write_dicts_to_file(file_path, corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches):
 	"""
 	Writes the two dicts to a file
 	:param pitch_to_ascii: pitch to ascii dict
@@ -225,13 +225,13 @@ def write_dicts_to_file(corpus_note_id_batches, note_id_inputs, note_id_labels, 
 	dict_db['note_id_labels'] = note_id_labels
 	dict_db['dot_to_id'] = dot_to_id
 	dict_db['corpus_duration_offset_batches'] = corpus_duration_offset_batches
-	dict_db_file = open('dict_db', 'wb')
+	dict_db_file = open(file_path, 'wb')
 	# source, destination
 	pickle.dump(dict_db, dict_db_file)
 	dict_db_file.close()
 
 
-def get_data(midi_folder, window_size: int):
+def get_data(file_path_to_save_data, midi_folder, window_size: int):
 	"""
 	Does all the preprocessing for NoteGen and the pre-preprocessing for DurationGen
 	:param midi_folder: a directory of all midi files
@@ -292,7 +292,7 @@ def get_data(midi_folder, window_size: int):
 	corpus_duration_offset_batches = tf.convert_to_tensor(corpus_duration_offset_batches)
 
 	# function call to write the dictionaries to a file
-	write_dicts_to_file(corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches)
+	write_dicts_to_file(file_path_to_save_data, corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches)
 
 	return corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches
 
