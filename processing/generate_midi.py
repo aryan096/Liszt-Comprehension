@@ -54,7 +54,7 @@ def generate_durations_and_offsets(model, piece: list) -> list:
 	"""
 	# ToDo:
 	# Implement generate durations
-	sample_n = 1  # The top sample_n dots are chosen from randomly when generating the next dot of the piece
+	sample_n = 4  # The top sample_n dots are chosen from randomly when generating the next dot of the piece
 
 	first_dot_id = START_ID
 	current_piece_len = len(piece)
