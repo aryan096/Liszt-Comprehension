@@ -6,13 +6,11 @@ import pickle
 import numpy as np
 # ToDo: (general)
 # 1. separate training and generation (along with saving/loading of weights) #TODO-NE
-# 2. Find way to store data (ary)
 # 3. not choosing start/stop/pad ids (in duration) #TODO-NE
 # 4. remove start stop pad tokens from pitch to ascii #TODO-NE
 # 5. flattening data #TODO-NE
 # 6. implement multi-head #TODO-NE (sorta)
 # 7. random file naming/write directly to Generated Pieces #TODO-NE
-# 8. Figure out GCP
 # 9. write/read dicts in the main functions
 # 10. clean up imports and files (doc strings, random comments, etc)
 # 11. update requirements - if someone who uses the venv we created, just call pip3 freeze > requirements.txt and
@@ -241,7 +239,7 @@ def split_train_and_test_data(inputs, labels):
 
 def get_data(file_path_to_save_data, midi_folder, window_size: int):
 	"""
-	Does all the preprocessing for NoteGen and the pre-preprocessing for DurationGen
+	Does all the preprocessing for NoteGen and the prepreprocessing for DurationGen
 	:param midi_folder: a directory of all midi files
 	:param window_size: window size for data
 	:return: notes in pieces as an id array of shape [num_pieces, window_size],
@@ -266,18 +264,16 @@ def get_data(file_path_to_save_data, midi_folder, window_size: int):
 	midi_files = os.listdir(midi_folder)[:]  # TODO - use this to only get some files if necessary
 	separator = "\\" if os.name == 'nt' else '/'
 
+	# for each file in the directory
 	for elm in midi_files:
 		if re.match('.*\.mid[i]?', elm) is not None:
+			# get music21 representation
 			m21_score = midi_to_m21(midi_folder + separator + elm)  # this returns the m21 score object
 
 			# this gets the list of notes/chords/rests, the list of durations, and the list of offsets
 			score, duration_offset_tuples = get_notes_and_durations(m21_score)
-			#print("score: \n" + str(score[564]))
-			#print("dots: \n" + str(duration_offset_tuples[564]))
-			# list_dots = list(duration_offset_tuples)
-			#print("arg_max: " + str(np.argmax([x for x, y in duration_offset_tuples])))
-			#print("max: " + str(max([x for x, y in duration_offset_tuples])))
-			# print(str(list_dots))
+
+			# converting the piece to an id reprentation
 			id_duration_offsets = duration_offset_idify(duration_offset_tuples, dot_to_id)
 			pitch_score = note_pitchify(score)
 			ascii_score = note_asciify(pitch_score, pitch_to_ascii)

@@ -8,6 +8,9 @@ import random
 
 
 def config():
+    '''
+    This function configures the processing and model based on user input.
+    '''
     model = None
     while model not in {"NOTE", "NOTE_DURATION"}:
         model = input("NOTE or NOTE_DURATION? (type one of the options in all caps): ")
@@ -119,7 +122,11 @@ def load_and_generate(file_path_read_data, file_path_read_weights, model_type):
     # x = [pitch_to_ascii[note] for note in initial_note]
     # x.sort()
     # initial_note_ascii = "".join(list(x))
-    initial_note_ascii = random.choice(list(ascii_to_id.keys()))
+    initial_note = input('Enter an initial note ( # for sharp, - for flat, and followed by the octave. Examples - A4, F#5, D-4. A random note will be chosen if you leave this blank or enter an invalid note.\n')
+    if initial_note in pitch_to_ascii:
+        initial_note_ascii = pitch_to_ascii[initial_note]
+    else:
+        initial_note_ascii = random.choice(list(ascii_to_id.keys()))
     generate_midi(note_model, ascii_to_id, reverse_dictionary(dot_to_id), ascii_to_pitch, initial_note_ascii, 100, duration_model)
 
 

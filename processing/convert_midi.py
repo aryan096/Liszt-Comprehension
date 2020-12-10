@@ -6,9 +6,10 @@ import re
 
 # This is a miscellaneous file we used to process midi files in various ways
 
-
-
 def convert(midi_folder, out_folder):
+    '''
+    merges tracks and saves new file
+    '''
     midi_files = os.listdir(midi_folder)[:1]
     for elm in midi_mfiles:
         m = mido.MidiFile(midi_folder + "\\" + elm)
@@ -77,6 +78,9 @@ def move_one_trackers_mido(midi_folder, target_folder):
 #                  r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\OneTrackData")
 
 def transpose(midi_folder):
+    '''
+    This function transposes all of Mozarts pieces
+    '''
     composer_folders = os.listdir(midi_folder)
 
     for composer in composer_folders:
@@ -96,6 +100,3 @@ def transpose(midi_folder):
                             shutil.move(current_directory + separator + new_file_name, target_directory)
 
 transpose(r'/Users/herberttraub/PycharmProjects/CSCI1470/HW1/Liszt-Comprehension/OneTrackData')
-
-
-
