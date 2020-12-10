@@ -90,7 +90,7 @@ def train_and_save(file_path_training_data, file_path_save_data, file_path_save_
         prepped_note_ids_train, prepped_dot_ids_train, prepped_note_ids_test, prepped_dot_ids_test = \
             split_train_and_test_data(prepped_note_ids, prepped_dot_ids)
         duration_train(duration_model, prepped_note_ids_train, prepped_dot_ids_train, duration_gen_epochs)
-        duration_test(duration_model, prepped_note_ids_test, prepped_dot_ids_test)
+        #duration_test(duration_model, prepped_note_ids_test, prepped_dot_ids_test)
     else:
         duration_model = None
 

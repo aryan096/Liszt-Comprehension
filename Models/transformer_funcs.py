@@ -257,7 +257,6 @@ class Transformer_Block(tf.keras.layers.Layer):
 
         return tf.nn.relu(ff_norm)
 
-
 class Position_Encoding_Layer(tf.keras.layers.Layer):
     def __init__(self, window_sz, emb_sz):
         super(Position_Encoding_Layer, self).__init__()
