@@ -25,7 +25,7 @@ def generate_notes(model, ascii_to_id_dict: dict, initial_note_ascii: str, lengt
 	:param length: desired piece length
 	:return: a generated piece of ASCII characters, a generated piece of IDs
 	"""
-	sample_n = 1  # The top sample_n chords are chosen from randomly when generating the next chord of the piece
+	sample_n = 2  # The top sample_n chords are chosen from randomly when generating the next chord of the piece
 	id_to_ascii_dict = reverse_dictionary(ascii_to_id_dict)
 
 	first_note_id = ascii_to_id_dict[initial_note_ascii]
