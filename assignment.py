@@ -1,5 +1,4 @@
 import time
-import os
 from Models.note_gen_functional import *
 from processing.preprocess import *
 from processing.generate_midi import *
