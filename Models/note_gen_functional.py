@@ -40,4 +40,5 @@ def train_note_gen(model, input_data, labels, num_epochs):
 
 
 def test_note_gen(model, input_data, labels):
-    model.evaluate(input_data, labels, batch_size=250)
+    result = model.evaluate(input_data, labels, batch_size=250)
+    return result
