@@ -1,2 +1,5 @@
 .env
 env
+duration_gen2.py
+note_gen.py
+__pycache__

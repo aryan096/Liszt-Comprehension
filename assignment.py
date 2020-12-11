@@ -79,7 +79,9 @@ def train_and_save(file_path_training_data, file_path_save_data, file_path_save_
     note_id_inputs_train, note_id_labels_train, note_id_inputs_test, note_id_labels_test = \
         split_train_and_test_data(note_id_inputs, note_id_labels)
     train_note_gen(note_model, note_id_inputs_train, note_id_labels_train, note_gen_epochs)
-    test_note_gen(note_model, note_id_inputs_test, note_id_labels_test)
+    print("Evaluate")
+    result = test_note_gen(note_model, note_id_inputs_test, note_id_labels_test)
+    print(dict(zip(note_model.metrics_names, result)))
 
     note_gen_time = time.time()
     print("Time elapsed for NoteGen training/testing = {} minutes".format((note_gen_time - start_time)/60))
