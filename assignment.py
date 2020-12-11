@@ -1,5 +1,4 @@
 import time
-import os
 from Models.note_gen_functional import *
 from processing.preprocess import *
 from processing.generate_midi import *
@@ -8,9 +7,9 @@ import random
 
 
 def config():
-    '''
+    """
     This function configures the processing and model based on user input.
-    '''
+    """
     model = None
     while model not in {"NOTE", "NOTE_DURATION"}:
         model = input("NOTE or NOTE_DURATION? (type one of the options in all caps): ")
@@ -68,8 +67,9 @@ def config():
 
     return model, file_path_training_data, file_path_save_data, file_path_save_weights, file_path_read_weights, note_gen_epochs, duration_gen_epochs, train, load
 
+
 def train_and_save(file_path_training_data, file_path_save_data, file_path_save_weights, model_type, note_gen_epochs, duration_gen_epochs):
-    '''Initialize, train, save'''
+    """Initialize, train, save"""
     start_time = time.time()
 
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
@@ -92,7 +92,7 @@ def train_and_save(file_path_training_data, file_path_save_data, file_path_save_
         prepped_note_ids_train, prepped_dot_ids_train, prepped_note_ids_test, prepped_dot_ids_test = \
             split_train_and_test_data(prepped_note_ids, prepped_dot_ids)
         duration_train(duration_model, prepped_note_ids_train, prepped_dot_ids_train, duration_gen_epochs)
-        #duration_test(duration_model, prepped_note_ids_test, prepped_dot_ids_test)
+        duration_test(duration_model, prepped_note_ids_test, prepped_dot_ids_test)
     else:
         duration_model = None
 
@@ -105,8 +105,7 @@ def train_and_save(file_path_training_data, file_path_save_data, file_path_save_
 
 
 def load_and_generate(file_path_read_data, file_path_read_weights, model_type):
-    '''get data, init models, sys_arguments stuff,
-     train and test note gen, mid process, train and test duration gen, post processing '''
+    """ loads previously trained weights and generates a piece"""
 
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = read_dicts_from_file(file_path_read_data)
 
@@ -120,10 +119,12 @@ def load_and_generate(file_path_read_data, file_path_read_weights, model_type):
     else:
         duration_model = None
 
+    # Alternative way to initialize a piece
     # initial_note = [REST_TOKEN]
     # x = [pitch_to_ascii[note] for note in initial_note]
     # x.sort()
     # initial_note_ascii = "".join(list(x))
+
     initial_note = input('Enter an initial note ( # for sharp, - for flat, and followed by the octave. Examples - A4, F#5, D-4. A random note will be chosen if you leave this blank or enter an invalid note.\n')
     if initial_note in pitch_to_ascii:
         initial_note_ascii = pitch_to_ascii[initial_note]
