@@ -52,8 +52,6 @@ def generate_durations_and_offsets(model, piece: list) -> list:
 	:param piece: generated sequence of note ids (with an extended dim)
 	:return: a piece of dot ids
 	"""
-	# ToDo:
-	# Implement generate durations
 	sample_n = 4  # The top sample_n dots are chosen from randomly when generating the next dot of the piece
 
 	first_dot_id = START_ID

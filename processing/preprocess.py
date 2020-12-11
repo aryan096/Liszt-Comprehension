@@ -3,20 +3,6 @@ import os
 import tensorflow as tf
 import re
 import pickle
-import numpy as np
-# ToDo: (general)
-# 1. separate training and generation (along with saving/loading of weights) #TODO-NE
-# 3. not choosing start/stop/pad ids (in duration) #TODO-NE
-# 4. remove start stop pad tokens from pitch to ascii #TODO-NE
-# 5. flattening data #TODO-NE
-# 6. implement multi-head #TODO-NE (sorta)
-# 7. random file naming/write directly to Generated Pieces #TODO-NE
-# 9. write/read dicts in the main functions
-# 10. clean up imports and files (doc strings, random comments, etc)
-# 11. update requirements - if someone who uses the venv we created, just call pip3 freeze > requirements.txt and
-#     it will do it automatically (I think)
-
-
 
 PAD_TOKEN = "**PAD**"
 PAD_ID = 2
@@ -70,7 +56,6 @@ def get_notes_and_durations(score) -> (list, list, list):
 	actual_offsets = []
 	actual_sounds = []
 
-
 	# This loop goes through everything in the score, adds notes, chords, and rests to the sounds list,
 	# and durations to the durations list
 	for sound in notes_and_rests:
@@ -97,7 +82,6 @@ def get_notes_and_durations(score) -> (list, list, list):
 
 	duration_offset_tuples = list(zip(actual_durations, incremented_offsets))
 	return actual_sounds, duration_offset_tuples
-
 
 
 def note_pitchify(score: list) -> list:
@@ -207,12 +191,7 @@ def read_dicts_from_file(file_path):
 
 def write_dicts_to_file(file_path, corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches):
 	"""
-	Writes the two dicts to a file
-	:param pitch_to_ascii: pitch to ascii dict
-	:param ascii_to_id: ascii to id dict
-	:param note_id_inputs:
-	:param note_id_labels:
-	:param dot_to_id:
+	Writes the dicts to a file
 	"""
 	# pickle code to write the dictionaries to a file
 	dict_db = {}
@@ -228,6 +207,7 @@ def write_dicts_to_file(file_path, corpus_note_id_batches, note_id_inputs, note_
 	pickle.dump(dict_db, dict_db_file)
 	dict_db_file.close()
 
+
 def split_train_and_test_data(inputs, labels):
 	n = len(inputs)
 	inputs_train = inputs[:int(n * 9/10)]
@@ -237,9 +217,11 @@ def split_train_and_test_data(inputs, labels):
 
 	return inputs_train, labels_train, inputs_test,  labels_test
 
+
 def get_data(file_path_to_save_data, midi_folder, window_size: int):
 	"""
 	Does all the preprocessing for NoteGen and the prepreprocessing for DurationGen
+	:param file_path_to_save_data: where the processed data gets stored for easy retrieval
 	:param midi_folder: a directory of all midi files
 	:param window_size: window size for data
 	:return: notes in pieces as an id array of shape [num_pieces, window_size],
@@ -261,7 +243,7 @@ def get_data(file_path_to_save_data, midi_folder, window_size: int):
 	pitch_to_ascii[REST_TOKEN] = REST_ASCII
 
 	# list of files in midi_folder
-	midi_files = os.listdir(midi_folder)[1:2]  # TODO - use this to only get some files if necessary
+	midi_files = os.listdir(midi_folder)[:]  # use this to only get some files if necessary
 	separator = "\\" if os.name == 'nt' else '/'
 
 	# for each file in the directory
@@ -316,11 +298,3 @@ def prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_id_batches)
 	prepped_dot_id_batches = tf.convert_to_tensor(corpus_duration_offset_id_batches)
 
 	return prepped_note_id_batches, prepped_dot_id_batches
-
-
-
-#corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, dot_to_id, corpus_duration_offset_batches = get_data(
-#	r"C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin", WINDOW_SIZE)
-
-#print(corpus_note_id_batches, corpus_duration_offset_batches)
-#print(prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches))
