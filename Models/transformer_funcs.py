@@ -1,4 +1,3 @@
-import numpy as np
 import tensorflow as tf
 import numpy as np
 from collections import defaultdict as ddict
@@ -22,15 +21,11 @@ def Attention_Matrix(K, Q, use_mask=False):
         dtype=tf.float32)
     atten_mask = tf.tile(tf.reshape(mask, [-1, window_size_queries, window_size_keys]), [tf.shape(input=K)[0], 1, 1])
 
-    # TODO:
-    # 1) compute attention weights using queries and key matrices (if use_mask==True, then make sure to add the attention mask before softmax)
-    # 2) return the attention matrix
     matrix = tf.matmul(Q, tf.reshape(K, shape=[K.shape[0], K.shape[2], K.shape[1]]))
     if use_mask:
         matrix += atten_mask
     matrix = tf.nn.softmax(matrix / np.sqrt(window_size_keys))
 
-    # Check lecture slides for how to compute self-attention
     # Remember:
     # - Q is [batch_size x window_size_queries x embedding_size]
     # - K is [batch_size x window_size_keys x embedding_size]
@@ -50,10 +45,6 @@ class Atten_Head(tf.keras.layers.Layer):
 
         self.use_mask = use_mask
 
-        # TODO:
-        # Initialize the weight matrices for K, V, and Q.
-        # They should be able to multiply an input_size vector to produce an output_size vector
-        # Hint: use self.add_weight(...)
         self.K_matrix = self.add_weight(shape=[input_size, output_size], initializer="truncated_normal", trainable=True)
         self.V_matrix = self.add_weight(shape=[input_size, output_size], initializer="truncated_normal", trainable=True)
         self.Q_matrix = self.add_weight(shape=[input_size, output_size], initializer="truncated_normal", trainable=True)
@@ -70,11 +61,6 @@ class Atten_Head(tf.keras.layers.Layer):
         :param inputs_for_queries: tensor of [batch_size x [ENG/FRN]_WINDOW_SIZE x input_size ]
         :return: tensor of [BATCH_SIZE x (ENG/FRN)_WINDOW_SIZE x output_size ]
         """
-
-        # TODO:
-        # - Apply 3 matrices to turn inputs into keys, values, and queries. You will need to use tf.tensordot for this.
-        # - Call Attention_Matrix with the keys and queries, and with self.use_mask.
-        # - Apply the attention matrix to the values
 
         K = tf.tensordot(inputs_for_keys, self.K_matrix, 1)
         # print("K mat shape = {}".format(self.K_matrix.shape))
@@ -95,8 +81,7 @@ class Multi_Headed(tf.keras.layers.Layer):
     def __init__(self, emb_sz, output_size, num_layers, use_mask):
         super(Multi_Headed, self).__init__()
 
-    # TODO:
-    # Initialize heads
+
         self.emb_sz = emb_sz
         self.out_size = output_size
         self.num_layers = num_layers
@@ -109,7 +94,6 @@ class Multi_Headed(tf.keras.layers.Layer):
         #self.head2 = Atten_Head(int(emb_sz/3), int(emb_sz/3), use_mask)
         #self.head3 = Atten_Head(int(emb_sz/3), int(emb_sz/3), use_mask)
         self.linear = tf.keras.layers.Dense(self.out_size)
-        
 
     @tf.function
     def call(self, inputs_for_keys, inputs_for_values = None, inputs_for_queries = None):
@@ -256,6 +240,7 @@ class Transformer_Block(tf.keras.layers.Layer):
         ff_norm = self.layer_norm(ff_out)
 
         return tf.nn.relu(ff_norm)
+
 
 class Position_Encoding_Layer(tf.keras.layers.Layer):
     def __init__(self, window_sz, emb_sz):

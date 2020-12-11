@@ -1,6 +1,7 @@
 from assignment import *
 from Models.duration_gen2 import *
 
+# File used to test things
 
 def test_generate():
     fake_id_to_ascii_dict = {i:l for i,l in enumerate("ABCDEFGHIJK")}
@@ -12,11 +13,13 @@ def test_generate():
 
 #test_generate()
 
+
 def get_inputs_and_labels(data):
     inputs = [data[i][:-1] for i in range(len(data))]
     labels = [data[i][1:] for i in range(len(data))]
 
     return inputs, labels
+
 
 def test_train():
     fake_id_to_ascii_dict = {i: l for i, l in enumerate("ABCDEFGHIJK")}
@@ -26,7 +29,6 @@ def test_train():
                                 [np.random.choice(range(11)) for _ in range(50)]])
     fake_input, fake_labels = get_inputs_and_labels(fake_data)
 
-    #print(model.call(fake_input))
     train_note_gen(model, fake_input, fake_labels)
     print(test_note_gen(model, fake_input, fake_labels))
     print("success!")
@@ -36,17 +38,13 @@ def test_train():
 
 def test_duration_gen():
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, duration_offset_dict, corpus_duration_offset_batches = get_data(
-        r'C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin', 250
-    )
-
+        r'C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin', 250)
 
     model = DurationGen2(len(ascii_to_id), len(duration_offset_dict), 250)
     prepped_note_ids, prepped_dot_ids = prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches)
 
-
     duration2_train(model, prepped_note_ids, prepped_dot_ids)
-    #print(corpus_duration_offset_batches[0:1])
-    #print(corpus_note_id_batches[0][0:1])
+
     out = model(tf.convert_to_tensor([prepped_note_ids[0]]), tf.convert_to_tensor([[START_ID, 1]]))
     print(out)
 
@@ -56,10 +54,10 @@ def test_duration_gen():
 
 #test_duration_gen()
 
+
 def test_dot_gen():
     corpus_note_id_batches, note_id_inputs, note_id_labels, ascii_to_id, pitch_to_ascii, duration_offset_dict, corpus_duration_offset_batches = get_data(
-        r'C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin', WINDOW_SIZE
-    )
+        r'C:\Users\dhruv\PycharmProjects\Liszt-Comprehension\data\Chopin', WINDOW_SIZE)
 
     model = DurationGen2(len(ascii_to_id), len(duration_offset_dict), 250)
     prepped_note_ids, prepped_dot_ids = prep_duration_gen(corpus_note_id_batches, corpus_duration_offset_batches)
@@ -68,4 +66,4 @@ def test_dot_gen():
 
     print(generate_durations_and_offsets(model, prepped_note_ids[0]))
 
-test_dot_gen()
+#test_dot_gen()

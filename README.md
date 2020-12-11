@@ -7,7 +7,7 @@ Made by Dhruv Bhatia, Noah Medina, Herbert Traub, and Aryan Srivastava.
 
 2. Just run `python assignment.py`! The program should prompt you for some inputs to determine the kind of learning and generation you want. 
 
-3. If you generated music, it will be saved in the Generated Pieces folder.
+3. If you generated music, it will be saved in the Generated Pieces folder under a file name of the current date and time.
 
 4. Have fun! 
 
@@ -29,4 +29,6 @@ duration_gen.py, note_gen_functional.py, and transformer_funcs.py.
 
 6. OneTrackData - one track midi files sorted by composers. 
 
-7. Trained Weights - Stored trained weights so you don't have to train everytime you want to make music! 
+7. Trained Weights - Stored trained weights so you don't have to train everytime you want to make music!
+
+8. Dict Data - Stored data from preprocessing to make generation based on already trained models more efficient.
