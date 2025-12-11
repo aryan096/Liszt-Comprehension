@@ -35,4 +35,4 @@ duration_gen.py, note_gen_functional.py, and transformer_funcs.py.
 
 ### Explanation video and samples
 
-[https://youtu.be/TBM_w61D3gk?si=fU_i_nk93mcGJuYW](url)
+[https://youtu.be/TBM_w61D3gk?si=fU_i_nk93mcGJuYW]
