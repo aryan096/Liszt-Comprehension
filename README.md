@@ -32,3 +32,7 @@ duration_gen.py, note_gen_functional.py, and transformer_funcs.py.
 7. Trained Weights - Stored trained weights so you don't have to train everytime you want to make music!
 
 8. Dict Data - Stored data from preprocessing to make generation based on already trained models more efficient.
+
+### Explanation video and samples
+
+[https://youtu.be/TBM_w61D3gk?si=fU_i_nk93mcGJuYW](url)
